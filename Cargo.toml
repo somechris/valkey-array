@@ -1,0 +1,16 @@
+[package]
+name = "valkey-array"
+version = "0.0.1"
+keywords = ["valkey", "array"]
+edition = "2024"
+license = "BSD-3-Clause"
+repository = "https://github.com/somechris/valkey-array"
+readme = "README.md"
+description = "An array module for Valkey"
+
+[dependencies]
+valkey-module = { version = "0.1.14" }
+
+[lib]
+crate-type = ["cdylib"]
+name = "valkey_array"
