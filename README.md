@@ -4,13 +4,14 @@ valkey-array is a [Valkey](https://valkey.io/) module implementing array command
 
 ## Usage
 
-* Install Rust, and `git`
+* Install Rust, `git`, and `make`
 * Run
 
 ```
 git clone https://github.com/somechris/valkey-array
 cd valkey-array
-cargo build --release
+make install-rust-tooling
+make build
 ```
 
 * The compiled module is now under `target/release`
