@@ -49,6 +49,7 @@
 pub mod commands;
 pub mod types;
 
+use crate::types::VKARRAY;
 use valkey_module::alloc::ValkeyAlloc;
 use valkey_module::valkey_module;
 
@@ -56,7 +57,7 @@ valkey_module! {
     name: "vkarray",
     version: 1,
     allocator: (ValkeyAlloc, ValkeyAlloc),
-    data_types: [],
+    data_types: [VKARRAY],
     commands: [
         ["arcount", commands::arcount, "", 1, 1, 1],
         ["ardel", commands::ardel, "", 1, 1, 1],
