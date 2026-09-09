@@ -47,6 +47,11 @@ impl Array {
         Array::default()
     }
 
+    /// Gets the number of entries
+    pub fn count(&self) -> usize {
+        self.values.len()
+    }
+
     /// Gets the value at a given position
     pub fn get(&self, position: &u64) -> Option<&ValkeyString> {
         self.values.get(position)

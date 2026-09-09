@@ -2,6 +2,7 @@
 //!
 //! ## Supported commands
 //!
+//! * [`ARCOUNT`](commands::arcount) - gets the number of used entries of an array
 //! * [`ARGET`](commands::arget) - gets values from an array
 //! * [`ARSET`](commands::arset) - sets values in an array
 //!
@@ -55,6 +56,7 @@ valkey_module! {
     allocator: (ValkeyAlloc, ValkeyAlloc),
     data_types: [],
     commands: [
+        ["arcount", commands::arcount, "", 1, 1, 1],
         ["arget", commands::arget, "", 1, 1, 1],
         ["arset", commands::arset, "", 1, 1, 1],
     ],
