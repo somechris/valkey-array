@@ -25,20 +25,26 @@ valkey-server --loadmodule path/to/valkey-array/target/release/libvalkey_array.s
 Then in a different terminal, run `redis-cli` and test with the following commands:
 
 ```
-127.0.0.1:6379> arset foo 2 "bar"
-(integer) 0
+127.0.0.1:6379> arset foo 23 "bar"
+(integer) 1
 127.0.0.1:6379> arset foo 42 "baz"
-(integer) 0
-127.0.0.1:6379> arget foo 2
+(integer) 1
+127.0.0.1:6379> arget foo 23
 "bar"
 127.0.0.1:6379> arget foo 42
 "baz"
-127.0.0.1:6379> arset foo 2 "quux"
-(integer) 0
-127.0.0.1:6379> arget foo 2
-"quux"
-127.0.0.1:6379> arget foo 23
+127.0.0.1:6379> arcount foo
+(integer) 2
+127.0.0.1:6379> arlen foo
+(integer) 43
+127.0.0.1:6379> ardel foo 42
+(integer) 1
+127.0.0.1:6379> arget foo 42
 (nil)
+127.0.0.1:6379> arcount foo
+(integer) 1
+127.0.0.1:6379> arlen foo
+(integer) 24
 ```
 
 ## Supported commands
