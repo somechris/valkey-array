@@ -1,5 +1,6 @@
 //! Implementation of the `ARSET` command
 
+use crate::commands::utils::err_if_further_arguments;
 use crate::types::{ARRAY_TYPE, Array};
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -10,9 +11,7 @@ pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let position = &args.next_u64()?;
     let value = &args.next_arg()?;
 
-    if args.next().is_some() {
-        return Err(ValkeyError::WrongArity);
-    }
+    err_if_further_arguments(args)?;
 
     ctx.log_warning(&format!(
         "Running ARSET for {key_name} @ {position} = {value}"

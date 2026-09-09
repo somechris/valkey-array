@@ -1,5 +1,6 @@
 //! Implementation of the `ARCOUNT` command
 
+use crate::commands::utils::err_if_further_arguments;
 use crate::types::{ARRAY_TYPE, Array};
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -8,9 +9,7 @@ pub fn arcount(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut args = args.into_iter().skip(1);
     let key_name = &args.next_arg()?;
 
-    if args.next().is_some() {
-        return Err(ValkeyError::WrongArity);
-    }
+    err_if_further_arguments(args)?;
 
     let key = ctx.open_key(key_name);
     let Ok(maybe_array) = key.get_value::<Array>(&ARRAY_TYPE) else {
