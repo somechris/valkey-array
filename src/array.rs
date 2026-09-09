@@ -32,7 +32,16 @@ impl Array {
 
     /// Deletes the value at a given position
     pub fn del(&mut self, position: &u64) -> Option<ValkeyString> {
-        self.values.remove(position)
+        let res = self.values.remove(position);
+
+        // If we deleted `next_highest_position`, recompute it
+        if position + 1 == self.next_highest_position {
+            self.next_highest_position = match self.values.keys().max() {
+                Some(max) => max + 1,
+                None => 0,
+            }
+        }
+        res
     }
 
     /// Gets the value at a given position
