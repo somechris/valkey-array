@@ -1,3 +1,8 @@
+//! Registration of the module itself
+#![allow(
+    missing_docs,
+    reason = "The generated code is missing docs, but it is outside of our control"
+)]
 use crate::commands;
 use crate::registration::vkarray::VKARRAY;
 use valkey_module::alloc::ValkeyAlloc;

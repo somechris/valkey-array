@@ -1,3 +1,5 @@
+//! Implementations of array commands
+
 pub mod arcount;
 pub mod ardel;
 pub mod arget;

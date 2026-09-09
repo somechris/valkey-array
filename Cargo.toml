@@ -14,3 +14,19 @@ valkey-module = { version = "0.1.14" }
 [lib]
 crate-type = ["cdylib"]
 name = "valkey_array"
+
+[lints.clippy]
+uninlined_format_args = "warn"  # To get more readable format strings
+print_stderr = "warn"  # To avoid committing debug statements
+print_stdout = "warn"  # To avoid committing debug statements
+wildcard_imports = "warn"  # Wildcard imports make it hard to see where entities are from
+unwrap_used = "warn"  # To enforce proper error handling
+expect_used = "warn"  # To enforce proper error handling
+panic_in_result_fn = "warn"  # To enforce proper error handling
+panic = "warn"  # To enforce proper error handling
+redundant_clone = "warn"  # To get rid of redundancies
+redundant_type_annotations = "warn"  # To get rid of redundancies
+
+[lints.rust]
+missing_docs = "warn"  # Yay for documentation
+
