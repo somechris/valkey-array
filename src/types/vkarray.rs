@@ -2,6 +2,8 @@
 //!
 //! The Rust implementation for arrays is it [`crate::types::Array`].
 
+use crate::types::Array;
+use std::os::raw::c_void;
 use valkey_module::native_types::ValkeyType;
 
 /// The data type for Valkey itself
@@ -13,7 +15,7 @@ pub static VKARRAY: ValkeyType = ValkeyType::new(
         rdb_load: None,
         rdb_save: None,
         aof_rewrite: None,
-        free: None,
+        free: Some(vkarray_free),
         digest: None,
         mem_usage: None,
 
@@ -34,3 +36,12 @@ pub static VKARRAY: ValkeyType = ValkeyType::new(
         unlink2: None,
     },
 );
+
+extern "C" fn vkarray_free(value: *mut c_void) {
+    if value.is_null() {
+        return;
+    }
+    unsafe {
+        drop(Box::from_raw(value.cast::<Array>()));
+    }
+}
