@@ -55,4 +55,9 @@ impl Array {
             1
         }
     }
+
+    /// Iterates over all positions along with their values
+    pub fn iter(&self) -> impl Iterator<Item = (&u64, &ValkeyString)> {
+        self.values.iter()
+    }
 }

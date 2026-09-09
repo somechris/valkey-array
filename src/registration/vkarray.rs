@@ -3,9 +3,11 @@
 //! The Rust implementation for arrays is it [`crate::Array`].
 
 use crate::array::Array;
-use std::os::raw::c_void;
+use std::os::raw::{c_int, c_void};
+use std::ptr::null_mut;
+use valkey_module::error::Error;
 use valkey_module::native_types::ValkeyType;
-use valkey_module::raw;
+use valkey_module::{logging, raw};
 
 /// The data type for Valkey itself
 pub static VKARRAY: ValkeyType = ValkeyType::new(
@@ -13,7 +15,7 @@ pub static VKARRAY: ValkeyType = ValkeyType::new(
     0,
     valkey_module::RedisModuleTypeMethods {
         version: valkey_module::REDISMODULE_TYPE_METHOD_VERSION as u64,
-        rdb_load: None,
+        rdb_load: Some(vkarray_rdb_load),
         rdb_save: Some(vkarray_rdb_save),
         aof_rewrite: None,
         free: Some(vkarray_free),
@@ -47,5 +49,43 @@ extern "C" fn vkarray_free(value: *mut c_void) {
     }
 }
 
-// Not yet saving anything
-extern "C" fn vkarray_rdb_save(_rdb: *mut raw::RedisModuleIO, _value: *mut c_void) {}
+/// Saves an array
+extern "C" fn vkarray_rdb_save(rdb: *mut raw::RedisModuleIO, value: *mut c_void) {
+    unsafe {
+        let array = &*value.cast::<Array>();
+        raw::save_unsigned(rdb, array.count() as u64);
+        for (position, value) in array.iter() {
+            raw::save_unsigned(rdb, *position);
+            raw::save_redis_string(rdb, value);
+        }
+    }
+}
+
+/// Loads an array from encoding version 0
+fn vkarray_rdb_load_version_0(rdb: *mut raw::RedisModuleIO) -> Result<Array, Error> {
+    let mut array = Array::new();
+
+    let count = raw::load_unsigned(rdb)?;
+    for _ in 0..count {
+        let position = raw::load_unsigned(rdb)?;
+        let value = raw::load_string(rdb)?;
+        array.set(&position, &value);
+    }
+
+    Ok(array)
+}
+
+unsafe extern "C" fn vkarray_rdb_load(rdb: *mut raw::RedisModuleIO, encver: c_int) -> *mut c_void {
+    if encver != 0 {
+        logging::log_warning(format!("Cannot load version {encver}"));
+        return null_mut();
+    }
+
+    match vkarray_rdb_load_version_0(rdb) {
+        Ok(array) => Box::into_raw(Box::new(array)).cast::<c_void>(),
+        Err(err) => {
+            logging::log_warning(format!("Failed to load array: {err}"));
+            null_mut()
+        }
+    }
+}
