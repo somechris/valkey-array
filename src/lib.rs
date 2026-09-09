@@ -2,10 +2,10 @@
 //!
 //! ## Supported commands
 //!
-//! * [`ARCOUNT`](commands::arcount) - gets the number of used entries of an array
-//! * [`ARGET`](commands::arget) - gets values from an array
-//! * [`ARLEN`](commands::arlen) - gets an array's highest used position + 1
-//! * [`ARSET`](commands::arset) - sets values in an array
+//! * [`ARCOUNT`](commands::arcount()) - gets the number of used entries of an array
+//! * [`ARGET`](commands::arget()) - gets values from an array
+//! * [`ARLEN`](commands::arlen()) - gets an array's highest used position + 1
+//! * [`ARSET`](commands::arset()) - sets values in an array
 //!
 //! ## Usage
 //!

@@ -1,0 +1,26 @@
+//! Implementation of the `ARCOUNT` command
+
+use crate::types::{ARRAY_TYPE, Array};
+use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
+
+/// Implements the `ARCOUNT` command
+pub fn arcount(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
+    let mut args = args.into_iter().skip(1);
+    let key_name = &args.next_arg()?;
+
+    if args.next().is_some() {
+        return Err(ValkeyError::WrongArity);
+    }
+
+    let key = ctx.open_key(key_name);
+    let Ok(maybe_array) = key.get_value::<Array>(&ARRAY_TYPE) else {
+        return Err(ValkeyError::WrongType);
+    };
+
+    let count = match maybe_array {
+        Some(array) => array.count(),
+        None => 0,
+    };
+
+    Ok(ValkeyValue::Integer(count as i64))
+}
