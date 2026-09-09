@@ -39,6 +39,7 @@ pub static ARRAY_TYPE: ValkeyType = ValkeyType::new(
 #[derive(Default, Debug)]
 pub struct Array {
     values: HashMap<u64, ValkeyString>,
+    next_highest_position: u64,
 }
 
 impl Array {
@@ -52,6 +53,13 @@ impl Array {
         self.values.len()
     }
 
+    /// Gets the highest used position + 1
+    ///
+    /// If there are no entries in the array, `0` is returned
+    pub fn next_highest_position(&self) -> u64 {
+        self.next_highest_position
+    }
+
     /// Gets the value at a given position
     pub fn get(&self, position: &u64) -> Option<&ValkeyString> {
         self.values.get(position)
@@ -63,6 +71,7 @@ impl Array {
     ///
     /// If the slot was previously unused, the function returns `1`. Otherwise `0`.
     pub fn set(&mut self, position: &u64, value: &ValkeyString) -> usize {
+        self.next_highest_position = self.next_highest_position.max(position + 1);
         if self.values.insert(*position, value.clone()).is_some() {
             // The position already had a value, so it's not a new slot
             0

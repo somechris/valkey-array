@@ -44,8 +44,9 @@ Then in a different terminal, run `redis-cli` and test with the following comman
 ## Supported commands
 
 * `ARCOUNT` - gets the number of used entries of an array
-* `ARSET` - sets values in an array
 * `ARGET` - gets values from an array
+* `ARLEN` - gets an array's highest used position + 1
+* `ARSET` - sets values in an array
 
 ## Caveats
 
