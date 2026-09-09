@@ -15,3 +15,6 @@ lint:
 fix:
 	cargo fmt --all
 	cargo clippy --workspace --all-targets --all-features --fix --allow-dirty --allow-staged -- -D clippy::all -D warnings
+
+docs:
+	cargo doc --no-deps

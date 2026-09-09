@@ -1,7 +1,10 @@
+//! Data types for the array commands
+
 use std::collections::HashMap;
 use valkey_module::ValkeyString;
 use valkey_module::native_types::ValkeyType;
 
+/// The data type for Valkey itself
 pub static ARRAY_TYPE: ValkeyType = ValkeyType::new(
     "vkarray",
     0,
@@ -32,20 +35,28 @@ pub static ARRAY_TYPE: ValkeyType = ValkeyType::new(
     },
 );
 
+/// The struct that models the data in Rust
 #[derive(Default, Debug)]
 pub struct Array {
     values: HashMap<u64, ValkeyString>,
 }
 
 impl Array {
+    /// Builds a new instance
     pub fn new() -> Self {
         Array::default()
     }
 
+    /// Gets the value at a given position
     pub fn get(&self, position: &u64) -> Option<&ValkeyString> {
         self.values.get(position)
     }
 
+    /// Sets the value at a given position
+    ///
+    /// # Returns
+    ///
+    /// If the slot was previously unused, the function returns `1`. Otherwise `0`.
     pub fn set(&mut self, position: &u64, value: &ValkeyString) -> usize {
         if self.values.insert(*position, value.clone()).is_some() {
             // The position already had a value, so it's not a new slot

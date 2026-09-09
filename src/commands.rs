@@ -1,6 +1,9 @@
+//! Implementations of the Valkey array commands
+
 use crate::types::{ARRAY_TYPE, Array};
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
+/// Implements the `ARGET` command
 pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut args = args.into_iter().skip(1);
     let key_name = &args.next_arg()?;
@@ -29,6 +32,7 @@ pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     Ok(value)
 }
 
+/// Implements the `ARSET` command
 pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut args = args.into_iter().skip(1);
     let key_name = &args.next_arg()?;
