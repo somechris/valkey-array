@@ -34,7 +34,7 @@ pub static ARRAY_TYPE: ValkeyType = ValkeyType::new(
 
 #[derive(Default, Debug)]
 pub struct Array {
-    values: HashMap<u64, ValkeyString>
+    values: HashMap<u64, ValkeyString>,
 }
 
 impl Array {

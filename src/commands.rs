@@ -1,5 +1,5 @@
+use crate::types::{ARRAY_TYPE, Array};
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
-use crate::types::{Array, ARRAY_TYPE};
 
 pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut args = args.into_iter().skip(1);
@@ -12,19 +12,18 @@ pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     ctx.log_warning(&format!("Running ARGET for {key_name} @ {position}"));
 
-
     let key = ctx.open_key(key_name);
     let Ok(maybe_array) = key.get_value::<Array>(&ARRAY_TYPE) else {
-        return Err(ValkeyError::WrongType)
+        return Err(ValkeyError::WrongType);
     };
 
     let Some(array) = maybe_array else {
-        return Ok(ValkeyValue::Null)
+        return Ok(ValkeyValue::Null);
     };
 
     let value = match array.get(position) {
         Some(ref_value) => ValkeyValue::BulkValkeyString(ref_value.clone()),
-        None => ValkeyValue::Null
+        None => ValkeyValue::Null,
     };
 
     Ok(value)
@@ -40,12 +39,13 @@ pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         return Err(ValkeyError::WrongArity);
     }
 
-    ctx.log_warning(&format!("Running ARSET for {key_name} @ {position} = {value}"));
-
+    ctx.log_warning(&format!(
+        "Running ARSET for {key_name} @ {position} = {value}"
+    ));
 
     let key = ctx.open_key_writable(key_name);
     let Ok(maybe_array) = key.get_value::<Array>(&ARRAY_TYPE) else {
-        return Err(ValkeyError::WrongType)
+        return Err(ValkeyError::WrongType);
     };
 
     let new_slot_count = match maybe_array {
@@ -57,7 +57,7 @@ pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
                 return Err(ValkeyError::Str("Failed to set value"));
             }
             ret
-        },
+        }
     };
 
     Ok(ValkeyValue::Integer(new_slot_count as i64))
