@@ -8,6 +8,9 @@ build:
 build-dev:
 	cargo build --locked
 
+run-dev: build-dev
+	valkey-server --save "" --loadmodule target/debug/libvalkey_array.so
+
 lint:
 	cargo fmt --all -- --check
 	cargo clippy --workspace --all-targets --all-features -- -D clippy::all -D warnings
