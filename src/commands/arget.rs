@@ -1,7 +1,8 @@
 //! Implementation of the `ARGET` command
 
 use crate::commands::utils::err_if_further_arguments;
-use crate::types::{ARRAY_TYPE, Array};
+use crate::types::Array;
+use crate::types::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Implements the `ARGET` command
@@ -15,7 +16,7 @@ pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     ctx.log_warning(&format!("Running ARGET for {key_name} @ {position}"));
 
     let key = ctx.open_key(key_name);
-    let Ok(maybe_array) = key.get_value::<Array>(&ARRAY_TYPE) else {
+    let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
         return Err(ValkeyError::WrongType);
     };
 

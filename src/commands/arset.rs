@@ -1,7 +1,8 @@
 //! Implementation of the `ARSET` command
 
 use crate::commands::utils::err_if_further_arguments;
-use crate::types::{ARRAY_TYPE, Array};
+use crate::types::Array;
+use crate::types::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Implements the `ARSET` command
@@ -18,7 +19,7 @@ pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     ));
 
     let key = ctx.open_key_writable(key_name);
-    let Ok(maybe_array) = key.get_value::<Array>(&ARRAY_TYPE) else {
+    let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
         return Err(ValkeyError::WrongType);
     };
 
@@ -27,7 +28,7 @@ pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         None => {
             let mut array = Array::new();
             let ret = array.set(position, value);
-            if key.set_value(&ARRAY_TYPE, array).is_err() {
+            if key.set_value(&VKARRAY, array).is_err() {
                 return Err(ValkeyError::Str("Failed to set value"));
             }
             ret
