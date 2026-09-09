@@ -60,6 +60,11 @@ impl Array {
         self.next_highest_position
     }
 
+    /// Deletes the value at a given position
+    pub fn del(&mut self, position: &u64) -> Option<ValkeyString> { 
+        self.values.remove(position)
+    }
+
     /// Gets the value at a given position
     pub fn get(&self, position: &u64) -> Option<&ValkeyString> {
         self.values.get(position)
