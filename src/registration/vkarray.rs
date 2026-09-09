@@ -1,8 +1,8 @@
 //! The data type that gets registered in Valkey for arrays
 //!
-//! The Rust implementation for arrays is it [`crate::types::Array`].
+//! The Rust implementation for arrays is it [`crate::Array`].
 
-use crate::types::Array;
+use crate::array::Array;
 use std::os::raw::c_void;
 use valkey_module::native_types::ValkeyType;
 use valkey_module::raw;

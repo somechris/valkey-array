@@ -1,8 +1,8 @@
 //! Implementation of the `ARDEL` command
 
+use crate::Array;
 use crate::commands::utils::err_if_further_arguments;
-use crate::types::Array;
-use crate::types::VKARRAY;
+use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Implements the `ARDEL` command

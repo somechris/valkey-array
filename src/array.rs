@@ -1,6 +1,6 @@
 //! The Rust implementation of Valkey arrays
 //!
-//! This gets registered in Valkey via [`crate::types::VKARRAY`].
+//! This gets registered in Valkey via [`crate::registration::VKARRAY`].
 
 use std::collections::HashMap;
 use valkey_module::ValkeyString;
