@@ -13,8 +13,6 @@ pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     err_if_further_arguments(args)?;
 
-    ctx.log_warning(&format!("Running ARGET for {key_name} @ {position}"));
-
     let key = ctx.open_key(key_name);
     let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
         return Err(ValkeyError::WrongType);

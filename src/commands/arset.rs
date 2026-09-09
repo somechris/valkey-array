@@ -14,10 +14,6 @@ pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     err_if_further_arguments(args)?;
 
-    ctx.log_warning(&format!(
-        "Running ARSET for {key_name} @ {position} = {value}"
-    ));
-
     let key = ctx.open_key_writable(key_name);
     let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
         return Err(ValkeyError::WrongType);
