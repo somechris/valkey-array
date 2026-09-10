@@ -46,6 +46,11 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARDEL").arg(key).arg(position).query(self)
     }
 
+    /// Gets an element from the array
+    fn arget(&mut self, key: &str, position: u64) -> RedisResult<Option<String>> {
+        cmd("ARGET").arg(key).arg(position).query(self)
+    }
+
     /// Sets an element in the array
     fn arset(&mut self, key: &str, position: u64, value: &str) -> RedisResult<u64> {
         cmd("ARSET").arg(key).arg(position).arg(value).query(self)
