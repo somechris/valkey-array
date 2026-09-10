@@ -28,6 +28,7 @@ pub fn arcount(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::arcount;
+    use assertables::assert_matches;
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 
@@ -38,7 +39,7 @@ mod tests {
 
         let result = arcount(&ctx, args);
 
-        assert!(matches!(result.unwrap_err(), ValkeyError::WrongArity));
+        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
     }
 
     #[test]
@@ -48,6 +49,6 @@ mod tests {
 
         let result = arcount(&ctx, args);
 
-        assert!(matches!(result.unwrap_err(), ValkeyError::WrongArity));
+        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
     }
 }

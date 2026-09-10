@@ -3,6 +3,7 @@
 pub mod utils;
 
 use crate::utils::ValkeyArrayTestContextBuilder;
+use assertables::assert_contains;
 use redis::{TypedCommands, cmd};
 use redis_test::TestContextBuilder;
 
@@ -13,7 +14,7 @@ fn faulty_calls() {
 
     // Too few arguments
     let err = cmd("ARDEL").arg("foo").query::<u64>(&mut con).unwrap_err();
-    assert!(err.to_string().contains("wrong"));
+    assert_contains!(err.to_string(), "wrong");
 
     // Too many arguments
     let err = cmd("ARDEL")
@@ -22,7 +23,7 @@ fn faulty_calls() {
         .arg("bar")
         .query::<u64>(&mut con)
         .unwrap_err();
-    assert!(err.to_string().contains("wrong"));
+    assert_contains!(err.to_string(), "wrong");
 
     // Wrong type for position
     let err = cmd("ARDEL")
@@ -30,7 +31,7 @@ fn faulty_calls() {
         .arg("bar")
         .query::<u64>(&mut con)
         .unwrap_err();
-    assert!(err.to_string().contains("integer"));
+    assert_contains!(err.to_string(), "integer");
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();

@@ -41,6 +41,7 @@ pub fn ardel(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::ardel;
+    use assertables::{assert_contains, assert_matches};
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 
@@ -51,7 +52,7 @@ mod tests {
 
         let result = ardel(&ctx, args);
 
-        assert!(matches!(result.unwrap_err(), ValkeyError::WrongArity));
+        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
     }
 
     #[test]
@@ -61,7 +62,7 @@ mod tests {
 
         let result = ardel(&ctx, args);
 
-        assert!(matches!(result.unwrap_err(), ValkeyError::WrongArity));
+        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
     }
 
     #[test]
@@ -72,6 +73,6 @@ mod tests {
         let result = ardel(&ctx, args);
         let err = result.expect_err("ARDEL should fail");
 
-        assert!(err.to_string().contains("integer"));
+        assert_contains!(err.to_string(), "integer");
     }
 }

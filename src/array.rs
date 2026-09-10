@@ -98,8 +98,10 @@ mod tests {
             }
         }
     }
+
     use crate::Array;
     use crate::array::tests::util::{assert_array_entry, assert_array_no_entry, vkstr};
+    use assertables::assert_none;
 
     #[test]
     fn array_basic_get_set() {
@@ -140,7 +142,7 @@ mod tests {
         let mut array = Array::new();
 
         // Deleting an unused slot
-        assert!(array.del(&42).is_none());
+        assert_none!(array.del(&42));
 
         // Setting a slot and deleting it again
         array.set(&42, &vkstr("bar"));
