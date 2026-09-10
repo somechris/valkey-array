@@ -1,5 +1,6 @@
 //! Utils for integration tests
 
+use redis::{Connection, ConnectionLike, RedisResult, cmd};
 use redis_test::utils::CommandMultiArgs;
 use redis_test::{TestContext, TestContextBuilder};
 
@@ -32,3 +33,23 @@ impl ValkeyArrayTestContextBuilder for TestContextBuilder {
         })
     }
 }
+
+/// Typed array commands for [`ConnectionLike`]s
+pub trait TypedArrayCommands: ConnectionLike + Sized {
+    /// Number of elements in the array
+    fn arcount(&mut self, key: &str) -> RedisResult<u64> {
+        cmd("ARCOUNT").arg(key).query(self)
+    }
+
+    /// Deletes on element from the array
+    fn ardel(&mut self, key: &str, position: u64) -> RedisResult<u64> {
+        cmd("ARDEL").arg(key).arg(position).query(self)
+    }
+
+    /// Sets an element in the array
+    fn arset(&mut self, key: &str, position: u64, value: &str) -> RedisResult<u64> {
+        cmd("ARSET").arg(key).arg(position).arg(value).query(self)
+    }
+}
+
+impl TypedArrayCommands for Connection {}

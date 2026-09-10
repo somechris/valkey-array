@@ -2,7 +2,7 @@
 
 pub mod utils;
 
-use crate::utils::ValkeyArrayTestContextBuilder;
+use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
 use assertables::assert_contains;
 use redis::{TypedCommands, cmd};
 use redis_test::TestContextBuilder;
@@ -35,11 +35,7 @@ fn faulty_calls() {
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
-    let err = cmd("ARDEL")
-        .arg("bar")
-        .arg("23")
-        .query::<u64>(&mut con)
-        .unwrap_err();
+    let err = con.ardel("bar", 23).unwrap_err();
     assert_eq!(err.code().unwrap(), "WRONGTYPE");
 }
 
@@ -49,22 +45,17 @@ fn simple() {
     let mut con = ctx.connection();
 
     // Checking on an unused key
-    let res: u64 = cmd("ARDEL").arg("foo").arg(42).query(&mut con).unwrap();
+    let res = con.ardel("foo", 42).unwrap();
     assert_eq!(res, 0); // 0 as nothing got deleted
 
     // Adding an element
-    cmd("ARSET")
-        .arg("foo")
-        .arg("42")
-        .arg("bar")
-        .query::<u64>(&mut con)
-        .unwrap();
+    con.arset("foo", 42, "bar").unwrap();
 
     // Deleting it again
-    let res: u64 = cmd("ARDEL").arg("foo").arg(42).query(&mut con).unwrap();
+    let res = con.ardel("foo", 42).unwrap();
     assert_eq!(res, 1); // 1 as an element got deleted
 
     // Deleting it once more
-    let res: u64 = cmd("ARDEL").arg("foo").arg(42).query(&mut con).unwrap();
+    let res = con.ardel("foo", 42).unwrap();
     assert_eq!(res, 0); // 0 as nothing got deleted
 }

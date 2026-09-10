@@ -2,7 +2,7 @@
 
 pub mod utils;
 
-use crate::utils::ValkeyArrayTestContextBuilder;
+use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
 use assertables::assert_contains;
 use redis::{TypedCommands, cmd};
 use redis_test::TestContextBuilder;
@@ -26,10 +26,7 @@ fn faulty_calls() {
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
-    let err = cmd("ARCOUNT")
-        .arg("bar")
-        .query::<u64>(&mut con)
-        .unwrap_err();
+    let err = con.arcount("bar").unwrap_err();
     assert_eq!(err.code().unwrap(), "WRONGTYPE");
 }
 
@@ -39,47 +36,28 @@ fn simple() {
     let mut con = ctx.connection();
 
     // Checking on an unused key
-    let res: u64 = cmd("ARCOUNT").arg("foo").query(&mut con).unwrap();
+    let res = con.arcount("foo").unwrap();
     assert_eq!(res, 0);
 
     // Adding an element
-    cmd("ARSET")
-        .arg("foo")
-        .arg("42")
-        .arg("bar")
-        .query::<u64>(&mut con)
-        .unwrap();
+    con.arset("foo", 42, "bar").unwrap();
 
     // Now there shoud be one entry
-    let res: u64 = cmd("ARCOUNT").arg("foo").query(&mut con).unwrap();
+    let res = con.arcount("foo").unwrap();
     assert_eq!(res, 1);
 
     // Adding two elements to the key
-    cmd("ARSET")
-        .arg("foo")
-        .arg("23")
-        .arg("baz")
-        .query::<u64>(&mut con)
-        .unwrap();
-    cmd("ARSET")
-        .arg("foo")
-        .arg("4711")
-        .arg("quux")
-        .query::<u64>(&mut con)
-        .unwrap();
+    con.arset("foo", 23, "baz").unwrap();
+    con.arset("foo", 4711, "quux").unwrap();
 
     // Now there shoud be three entries
-    let res: u64 = cmd("ARCOUNT").arg("foo").query(&mut con).unwrap();
+    let res = con.arcount("foo").unwrap();
     assert_eq!(res, 3);
 
     // Deleting an entry
-    cmd("ARDEL")
-        .arg("foo")
-        .arg("23")
-        .query::<u64>(&mut con)
-        .unwrap();
+    con.ardel("foo", 23).unwrap();
 
     // Now there shoud be two entries
-    let res: u64 = cmd("ARCOUNT").arg("foo").query(&mut con).unwrap();
+    let res = con.arcount("foo").unwrap();
     assert_eq!(res, 2);
 }
