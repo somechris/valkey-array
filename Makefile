@@ -21,3 +21,6 @@ fix:
 
 docs:
 	cargo doc --no-deps
+
+test:
+	cargo test
