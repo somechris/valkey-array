@@ -9,7 +9,10 @@ readme = "README.md"
 description = "An array module for Valkey"
 
 [dependencies]
-valkey-module = { version = "0.1.14" }
+valkey-module = "0.1.14"
+
+[dev-dependencies]
+valkey-module = { version = "0.1.14", features=["enable-system-alloc", "test-shims"] }
 
 [lib]
 crate-type = ["cdylib"]
