@@ -74,23 +74,27 @@ impl Array {
 #[cfg(test)]
 mod tests {
     mod util {
-        use valkey_module::ValkeyString;
         use crate::Array;
+        use valkey_module::ValkeyString;
 
         pub fn vkstr<S: Into<String>>(input: S) -> ValkeyString {
             ValkeyString::test(input.into())
         }
 
+        #[allow(clippy::panic, reason = "assertions are allowed to crash out")]
         pub fn assert_array_entry<S: Into<String>>(array: &Array, position: u64, expected: S) {
-            let value =array.get(&position).unwrap_or_else(|| panic!("array should have a value at {position}"));
+            let value = array
+                .get(&position)
+                .unwrap_or_else(|| panic!("array should have a value at {position}"));
 
             let expected_str = vkstr(expected);
-            assert_eq!(*value, expected_str, "\"{}\" == \"{}\"", value.to_string(), expected_str);
+            assert_eq!(*value, expected_str, "\"{value}\" == \"{expected_str}\"");
         }
 
+        #[allow(clippy::panic, reason = "assertions are allowed to crash out")]
         pub fn assert_array_no_entry(array: &Array, position: u64) {
             if let Some(entry) = array.get(&position) {
-                panic!("array should be empty but is \"{}\" at {position}", entry.to_string());
+                panic!("array should be empty but is \"{entry}\" at {position}");
             }
         }
     }

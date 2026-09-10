@@ -24,3 +24,30 @@ pub fn arcount(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     Ok(ValkeyValue::Integer(count as i64))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::commands::arcount;
+    use valkey_module::test_shims::create_test_args;
+    use valkey_module::{Context, ValkeyError};
+
+    #[test]
+    fn arity_too_low() {
+        let ctx = Context::test();
+        let args = create_test_args(&["ARCOUNT"]);
+
+        let result = arcount(&ctx, args);
+
+        assert!(matches!(result.unwrap_err(), ValkeyError::WrongArity));
+    }
+
+    #[test]
+    fn arity_too_high() {
+        let ctx = Context::test();
+        let args = create_test_args(&["ARCOUNT", "foo", "bar"]);
+
+        let result = arcount(&ctx, args);
+
+        assert!(matches!(result.unwrap_err(), ValkeyError::WrongArity));
+    }
+}
