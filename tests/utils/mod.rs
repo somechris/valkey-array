@@ -51,6 +51,11 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARGET").arg(key).arg(position).query(self)
     }
 
+    /// Number of highest allocated position + 1
+    fn arlen(&mut self, key: &str) -> RedisResult<u64> {
+        cmd("ARLEN").arg(key).query(self)
+    }
+
     /// Sets an element in the array
     fn arset(&mut self, key: &str, position: u64, value: &str) -> RedisResult<u64> {
         cmd("ARSET").arg(key).arg(position).arg(value).query(self)

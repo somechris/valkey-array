@@ -24,3 +24,31 @@ pub fn arlen(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     Ok(ValkeyValue::Integer(count as i64))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::commands::arlen;
+    use assertables::assert_matches;
+    use valkey_module::test_shims::create_test_args;
+    use valkey_module::{Context, ValkeyError};
+
+    #[test]
+    fn arity_too_low() {
+        let ctx = Context::test();
+        let args = create_test_args(&["ARLEN"]);
+
+        let result = arlen(&ctx, args);
+
+        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+    }
+
+    #[test]
+    fn arity_too_high() {
+        let ctx = Context::test();
+        let args = create_test_args(&["ARLEN", "foo", "bar"]);
+
+        let result = arlen(&ctx, args);
+
+        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+    }
+}
