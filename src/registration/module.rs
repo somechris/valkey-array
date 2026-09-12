@@ -17,6 +17,7 @@ valkey_module! {
         ["arcount", commands::arcount, "", 1, 1, 1],
         ["ardel", commands::ardel, "", 1, 1, 1],
         ["arget", commands::arget, "", 1, 1, 1],
+        ["arinfo", commands::arinfo, "", 1, 1, 1],
         ["arinsert", commands::arinsert, "", 1, 1, 1],
         ["arlen", commands::arlen, "", 1, 1, 1],
         ["arnext", commands::arnext, "", 1, 1, 1],

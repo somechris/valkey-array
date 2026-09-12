@@ -123,6 +123,22 @@ impl Array {
         1
     }
 
+    /// Collects info about the array
+    ///
+    /// # Returns
+    ///
+    /// A [`HashMap`] with the following key/values:
+    /// * `count` - number of set elements
+    /// * `len` - maximum used position + 1 (0 if the array is empty)
+    /// * `insert-cursor` - position of the insert cursor
+    pub fn info(&self) -> HashMap<&'static str, String> {
+        HashMap::from([
+            ("count", self.count().to_string()),
+            ("len", self.next_highest_position.to_string()),
+            ("insert-cursor", self.insert_cursor.to_string()),
+        ])
+    }
+
     /// Iterates over all positions along with their values
     pub fn iter(&self) -> impl Iterator<Item = (&u64, &ValkeyString)> {
         self.values.iter()
@@ -159,6 +175,7 @@ mod tests {
 
     use crate::Array;
     use crate::array::tests::util::{assert_array_entry, assert_array_no_entry, vkstr};
+    use std::collections::HashMap;
 
     #[test]
     fn array_basic_get_set() {
@@ -368,5 +385,33 @@ mod tests {
         assert_eq!(res, 1);
         let res = array.get_insert_cursor();
         assert_eq!(res, 42);
+    }
+
+    #[test]
+    fn array_info() {
+        let mut array = Array::new();
+
+        // Checking on an empty Array
+        let info = array.info();
+        let expected = HashMap::from([
+            ("count", "0".to_string()),
+            ("len", "0".to_string()),
+            ("insert-cursor", "0".to_string()),
+        ]);
+        assert_eq!(info, expected);
+
+        // Setting some data in the array
+        array.set(&42, &vkstr("bar"));
+        array.set(&23, &vkstr("baz"));
+        array.set_insert_cursor(4711);
+
+        // Checking info again
+        let info = array.info();
+        let expected = HashMap::from([
+            ("count", "2".to_string()),
+            ("len", "43".to_string()),
+            ("insert-cursor", "4711".to_string()),
+        ]);
+        assert_eq!(info, expected);
     }
 }

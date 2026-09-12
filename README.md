@@ -7,6 +7,7 @@ valkey-array is a [Valkey](https://valkey.io/) module implementing array command
 * `ARCOUNT` - gets the number of used entries of an array
 * `ARDEL` - deletes values from an array
 * `ARGET` - gets values from an array
+* `ARINFO` - gives information about the array
 * `ARINSERT` - inserts an element into the array
 * `ARLEN` - gets an array's highest used position + 1
 * `ARNEXT` - gets the position for the next insert

@@ -3,6 +3,7 @@
 use redis::{Connection, ConnectionLike, RedisResult, cmd};
 use redis_test::utils::CommandMultiArgs;
 use redis_test::{TestContext, TestContextBuilder};
+use std::collections::HashMap;
 
 const SERVER_BIN_ENV_VAR: &str = "REDISRS_SERVER_BIN";
 
@@ -49,6 +50,11 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     /// Gets an element from the array
     fn arget(&mut self, key: &str, position: u64) -> RedisResult<Option<String>> {
         cmd("ARGET").arg(key).arg(position).query(self)
+    }
+
+    /// Inserts an element into the array at the insert cursor
+    fn arinfo(&mut self, key: &str) -> RedisResult<HashMap<String, String>> {
+        cmd("ARINFO").arg(key).query(self)
     }
 
     /// Inserts an element into the array at the insert cursor
