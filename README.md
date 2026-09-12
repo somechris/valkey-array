@@ -2,6 +2,17 @@
 
 valkey-array is a [Valkey](https://valkey.io/) module implementing array commands (`ARSET`, `ARGET`, ...)
 
+## Supported commands
+
+* `ARCOUNT` - gets the number of used entries of an array
+* `ARDEL` - deletes values from an array
+* `ARGET` - gets values from an array
+* `ARINSERT` - inserts an element into the array
+* `ARLEN` - gets an array's highest used position + 1
+* `ARNEXT` - gets the position for the next insert
+* `ARSEEK` - sets the position for the next insert
+* `ARSET` - sets values in an array
+
 ## Usage
 
 * Install Rust, `git`, and `make`
@@ -46,17 +57,6 @@ Then in a different terminal, run `redis-cli` and test with the following comman
 127.0.0.1:6379> arlen foo
 (integer) 24
 ```
-
-## Supported commands
-
-* `ARCOUNT` - gets the number of used entries of an array
-* `ARDEL` - deletes values from an array
-* `ARGET` - gets values from an array
-* `ARINSERT` - inserts an element into the array
-* `ARLEN` - gets an array's highest used position + 1
-* `ARNEXT` - gets the position for the next insert
-* `ARSEEK` - sets the position for the next insert
-* `ARSET` - sets values in an array
 
 ## Caveats
 
