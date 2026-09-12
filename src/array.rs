@@ -95,6 +95,16 @@ impl Array {
         }
     }
 
+    /// Sets the position to insert the next item
+    ///
+    /// # Returns
+    ///
+    /// 1, if setting the position worked. 0 otherwise.
+    pub fn set_insert_cursor(&mut self, position: u64) -> u64 {
+        self.insert_cursor = position;
+        1
+    }
+
     /// Iterates over all positions along with their values
     pub fn iter(&self) -> impl Iterator<Item = (&u64, &ValkeyString)> {
         self.values.iter()
@@ -278,5 +288,16 @@ mod tests {
         array.insert(&vkstr("foo"));
         let res = array.get_insert_cursor();
         assert_eq!(res, 2);
+    }
+
+    #[test]
+    fn array_set_insert_cursor() {
+        let mut array = Array::new();
+
+        // Setting the inser cursor on fresh Array
+        let res = array.set_insert_cursor(42);
+        assert_eq!(res, 1);
+        let res = array.get_insert_cursor();
+        assert_eq!(res, 42);
     }
 }

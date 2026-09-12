@@ -55,6 +55,7 @@ Then in a different terminal, run `redis-cli` and test with the following comman
 * `ARINSERT` - inserts an element into the array
 * `ARLEN` - gets an array's highest used position + 1
 * `ARNEXT` - gets the position for the next insert
+* `ARSEEK` - sets the position for the next insert
 * `ARSET` - sets values in an array
 
 ## Caveats
