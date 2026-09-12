@@ -31,8 +31,11 @@ impl Array {
     }
 
     /// Deletes the value at a given position
-    pub fn del(&mut self, position: &u64) -> Option<ValkeyString> {
-        let res = self.values.remove(position);
+    pub fn del(&mut self, position: &u64) -> u64 {
+        let count = match self.values.remove(position) {
+            Some(_) => 1,
+            None => 0,
+        };
 
         // If we deleted `next_highest_position`, recompute it
         if position + 1 == self.next_highest_position {
@@ -41,12 +44,14 @@ impl Array {
                 None => 0,
             }
         }
-        res
+
+        count
     }
 
     /// Gets the value at a given position
-    pub fn get(&self, position: &u64) -> Option<&ValkeyString> {
-        self.values.get(position)
+    // Returns an owned value instead of a reference as `ARGET` needs an owned value anyways.
+    pub fn get(&self, position: &u64) -> Option<ValkeyString> {
+        self.values.get(position).cloned()
     }
 
     /// Sets the value at a given position
@@ -88,7 +93,7 @@ mod tests {
                 .unwrap_or_else(|| panic!("array should have a value at {position}"));
 
             let expected_str = vkstr(expected);
-            assert_eq!(*value, expected_str, "\"{value}\" == \"{expected_str}\"");
+            assert_eq!(*value, *expected_str, "\"{value}\" == \"{expected_str}\"");
         }
 
         #[allow(clippy::panic, reason = "assertions are allowed to crash out")]
@@ -101,7 +106,6 @@ mod tests {
 
     use crate::Array;
     use crate::array::tests::util::{assert_array_entry, assert_array_no_entry, vkstr};
-    use assertables::assert_none;
 
     #[test]
     fn array_basic_get_set() {
@@ -142,12 +146,13 @@ mod tests {
         let mut array = Array::new();
 
         // Deleting an unused slot
-        assert_none!(array.del(&42));
+        let deleted = array.del(&42);
+        assert_eq!(deleted, 0);
 
         // Setting a slot and deleting it again
         array.set(&42, &vkstr("bar"));
-        let deleted = array.del(&42).expect("del should yield the old value");
-        assert_eq!(deleted, vkstr("bar"));
+        let deleted = array.del(&42);
+        assert_eq!(deleted, 1);
     }
 
     #[test]
@@ -183,10 +188,10 @@ mod tests {
         array.set(&23, &vkstr("baz"));
         array.set(&42, &vkstr("bar"));
 
-        array.del(&42).expect("del should yield the old value");
+        array.del(&42);
         assert_eq!(array.next_highest_position(), 24);
 
-        array.del(&23).expect("del should yield the old value");
+        array.del(&23);
         assert_eq!(array.next_highest_position(), 0);
     }
 }

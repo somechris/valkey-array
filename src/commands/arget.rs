@@ -1,33 +1,21 @@
 //! Implementation of the `ARGET` command
 
 use crate::Array;
-use crate::commands::utils::err_if_further_arguments;
+use crate::commands::utils::{err_if_further_arguments, read_only_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Implements the `ARGET` command
 pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
-    let mut args = args.into_iter().skip(1);
-    let key_name = &args.next_arg()?;
-    let position = &args.next_u64()?;
+    let mut arg_iter = to_arg_iter!(args);
+    let key_name = &arg_iter.next_arg()?;
+    let position = &arg_iter.next_u64()?;
 
-    err_if_further_arguments(args)?;
+    err_if_further_arguments(arg_iter)?;
 
-    let key = ctx.open_key(key_name);
-    let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
-        return Err(ValkeyError::WrongType);
-    };
+    let maybe_element = read_only_action!(ctx, key_name, ValkeyValue::Null, Array::get, position);
 
-    let Some(array) = maybe_array else {
-        return Ok(ValkeyValue::Null);
-    };
-
-    let value = match array.get(position) {
-        Some(ref_value) => ValkeyValue::BulkValkeyString(ref_value.clone()),
-        None => ValkeyValue::Null,
-    };
-
-    Ok(value)
+    Ok(maybe_element.into())
 }
 
 #[cfg(test)]

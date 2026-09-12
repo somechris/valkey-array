@@ -1,26 +1,18 @@
 //! Implementation of the `ARCOUNT` command
 
 use crate::Array;
-use crate::commands::utils::err_if_further_arguments;
+use crate::commands::utils::{err_if_further_arguments, read_only_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Implements the `ARCOUNT` command
 pub fn arcount(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
-    let mut args = args.into_iter().skip(1);
-    let key_name = &args.next_arg()?;
+    let mut arg_iter = to_arg_iter!(args);
+    let key_name = &arg_iter.next_arg()?;
 
-    err_if_further_arguments(args)?;
+    err_if_further_arguments(arg_iter)?;
 
-    let key = ctx.open_key(key_name);
-    let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
-        return Err(ValkeyError::WrongType);
-    };
-
-    let count = match maybe_array {
-        Some(array) => array.count(),
-        None => 0,
-    };
+    let count = read_only_action!(ctx, key_name, ValkeyValue::Integer(0), Array::count);
 
     Ok(ValkeyValue::Integer(count as i64))
 }

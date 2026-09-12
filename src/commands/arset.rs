@@ -1,37 +1,22 @@
 //! Implementation of the `ARSET` command
 
 use crate::Array;
-use crate::commands::utils::err_if_further_arguments;
+use crate::commands::utils::{err_if_further_arguments, read_write_creating_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Implements the `ARSET` command
 pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
-    let mut args = args.into_iter().skip(1);
-    let key_name = &args.next_arg()?;
-    let position = &args.next_u64()?;
-    let value = &args.next_arg()?;
+    let mut arg_iter = to_arg_iter!(args);
+    let key_name = &arg_iter.next_arg()?;
+    let position = &arg_iter.next_u64()?;
+    let value = &arg_iter.next_arg()?;
 
-    err_if_further_arguments(args)?;
+    err_if_further_arguments(arg_iter)?;
 
-    let key = ctx.open_key_writable(key_name);
-    let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
-        return Err(ValkeyError::WrongType);
-    };
+    let count = read_write_creating_action!(ctx, key_name, Array::set, position, value);
 
-    let new_slot_count = match maybe_array {
-        Some(array) => array.set(position, value),
-        None => {
-            let mut array = Array::new();
-            let ret = array.set(position, value);
-            if key.set_value(&VKARRAY, array).is_err() {
-                return Err(ValkeyError::Str("Failed to set value"));
-            }
-            ret
-        }
-    };
-
-    Ok(ValkeyValue::Integer(new_slot_count as i64))
+    Ok(ValkeyValue::Integer(count as i64))
 }
 
 #[cfg(test)]
