@@ -20,6 +20,7 @@ valkey_module! {
         ["arinsert", commands::arinsert, "", 1, 1, 1],
         ["arlen", commands::arlen, "", 1, 1, 1],
         ["arnext", commands::arnext, "", 1, 1, 1],
+        ["arring", commands::arring, "", 1, 1, 1],
         ["arseek", commands::arseek, "", 1, 1, 1],
         ["arset", commands::arset, "", 1, 1, 1],
     ],

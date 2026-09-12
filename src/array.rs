@@ -79,6 +79,24 @@ impl Array {
         position
     }
 
+    /// Inserts an element in ring-buffer fashion
+    ///
+    /// # Returns
+    ///
+    /// The last inserted position is returned
+    pub fn insert_ring(&mut self, buffer_size: u64, value: &ValkeyString) -> u64 {
+        // Bring the cursor into the expected range
+        self.insert_cursor %= buffer_size;
+
+        // Insert the value
+        let position = self.insert(value);
+
+        // Bring the cursor back into the expected range
+        self.insert_cursor %= buffer_size;
+
+        position
+    }
+
     /// Sets the value at a given position
     ///
     /// # Returns
@@ -259,6 +277,57 @@ mod tests {
         assert_array_entry(&array, 0, "foo");
         assert_array_entry(&array, 1, "bar");
         assert_array_entry(&array, 2, "quux");
+    }
+
+    #[test]
+    fn array_insert_ring() {
+        let mut array = Array::new();
+
+        // We test with a ring buffer of size three. So the fourth element should overwrite the
+        // first.
+
+        // Insert first item
+        let res = array.insert_ring(3, &vkstr("foo"));
+        assert_eq!(res, 0);
+
+        // Insert second item
+        let res = array.insert_ring(3, &vkstr("bar"));
+        assert_eq!(res, 1);
+
+        // Insert third item
+        let res = array.insert_ring(3, &vkstr("baz"));
+        assert_eq!(res, 2);
+
+        // Insert fourth item. This should overwrite the first
+        let res = array.insert_ring(3, &vkstr("quux"));
+        assert_eq!(res, 0);
+
+        assert_array_entry(&array, 0, "quux");
+        assert_array_entry(&array, 1, "bar");
+        assert_array_entry(&array, 2, "baz");
+
+        // Check that the insert cursor got updated accordingly
+        let res = array.get_insert_cursor();
+        assert_eq!(res, 1);
+    }
+
+    #[test]
+    fn array_insert_ring_initial_clamp() {
+        let mut array = Array::new();
+
+        // We set the insert cursor to 42
+        array.set_insert_cursor(42);
+
+        // Then treat it as ring buffer of size 23 and insert an element, which should land at
+        // position 19 (= 42 % 23)
+        array.insert_ring(23, &vkstr("foo"));
+
+        assert_array_entry(&array, 19, "foo");
+        assert_array_no_entry(&array, 42);
+
+        // Check that the insert cursor got updated accordingly
+        let res = array.get_insert_cursor();
+        assert_eq!(res, 20);
     }
 
     #[test]

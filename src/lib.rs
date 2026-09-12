@@ -8,6 +8,7 @@
 //! * [`ARINSERT`](commands::arinsert()) - inserts elements into the array
 //! * [`ARLEN`](commands::arlen()) - gets an array's highest used position + 1
 //! * [`ARNEXT`](commands::arnext()) - gets the position for the next insert
+//! * [`ARRING`](commands::arring()) - insert an element in ring-buffer fashion
 //! * [`ARSEEK`](commands::arseek()) - sets the position for the next insert
 //! * [`ARSET`](commands::arset()) - sets values in an array
 //!

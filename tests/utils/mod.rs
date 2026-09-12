@@ -66,6 +66,15 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARNEXT").arg(key).query(self)
     }
 
+    /// Inserts an element in a ring-buffer fashion
+    fn arring(&mut self, key: &str, buffer_size: u64, value: &str) -> RedisResult<u64> {
+        cmd("ARRING")
+            .arg(key)
+            .arg(buffer_size)
+            .arg(value)
+            .query(self)
+    }
+
     /// Sets the position for the next insert
     fn arseek(&mut self, key: &str, position: u64) -> RedisResult<u64> {
         cmd("ARSEEK").arg(key).arg(position).query(self)
