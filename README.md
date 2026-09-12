@@ -52,6 +52,7 @@ Then in a different terminal, run `redis-cli` and test with the following comman
 * `ARCOUNT` - gets the number of used entries of an array
 * `ARDEL` - deletes values from an array
 * `ARGET` - gets values from an array
+* `ARINSERT` - inserts an element into the array
 * `ARLEN` - gets an array's highest used position + 1
 * `ARSET` - sets values in an array
 

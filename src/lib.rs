@@ -5,6 +5,7 @@
 //! * [`ARCOUNT`](commands::arcount()) - gets the number of used entries of an array
 //! * [`ARDEL`](commands::ardel()) - deletes values from an array
 //! * [`ARGET`](commands::arget()) - gets values from an array
+//! * [`ARINSERT`](commands::arinsert()) - inserts elements into the array
 //! * [`ARLEN`](commands::arlen()) - gets an array's highest used position + 1
 //! * [`ARSET`](commands::arset()) - sets values in an array
 //!

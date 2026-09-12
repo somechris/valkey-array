@@ -8,7 +8,13 @@ use valkey_module::ValkeyString;
 /// The struct that models the data in Rust
 #[derive(Default, Debug)]
 pub struct Array {
+    /// The array's value as map
     values: HashMap<u64, ValkeyString>,
+
+    /// The position where the next inserted element will land
+    insert_cursor: u64,
+
+    /// The maximum used position + 1 (0 if the array is empty)
     next_highest_position: u64,
 }
 
@@ -52,6 +58,20 @@ impl Array {
     // Returns an owned value instead of a reference as `ARGET` needs an owned value anyways.
     pub fn get(&self, position: &u64) -> Option<ValkeyString> {
         self.values.get(position).cloned()
+    }
+
+    /// Gets the value at a given position
+    // Returns an owned value instead of a reference as `ARGET` needs an owned value anyways.
+    pub fn insert(&mut self, value: &ValkeyString) -> u64 {
+        // Inserting the value
+        let position = self.insert_cursor;
+        self.set(&position, value);
+
+        // Bumping the insert cursor
+        self.insert_cursor += 1;
+
+        // Return the inserted position
+        position
     }
 
     /// Sets the value at a given position
@@ -193,5 +213,36 @@ mod tests {
 
         array.del(&23);
         assert_eq!(array.next_highest_position(), 0);
+    }
+
+    #[test]
+    fn array_insert() {
+        let mut array = Array::new();
+
+        // First insert
+        let res = array.insert(&vkstr("foo"));
+        assert_eq!(res, 0);
+
+        assert_array_entry(&array, 0, "foo");
+        assert_array_no_entry(&array, 1);
+        assert_array_no_entry(&array, 2);
+
+        // Second insert
+        let res = array.insert(&vkstr("bar"));
+        assert_eq!(res, 1);
+
+        assert_array_entry(&array, 0, "foo");
+        assert_array_entry(&array, 1, "bar");
+        assert_array_no_entry(&array, 2);
+
+        // Insert after higher set
+        array.set(&42, &vkstr("baz"));
+
+        let res = array.insert(&vkstr("quux"));
+        assert_eq!(res, 2);
+
+        assert_array_entry(&array, 0, "foo");
+        assert_array_entry(&array, 1, "bar");
+        assert_array_entry(&array, 2, "quux");
     }
 }
