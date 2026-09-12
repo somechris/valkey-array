@@ -60,6 +60,11 @@ impl Array {
         self.values.get(position).cloned()
     }
 
+    /// Gets the position where the next item will get inserted
+    pub fn get_insert_cursor(&self) -> u64 {
+        self.insert_cursor
+    }
+
     /// Gets the value at a given position
     // Returns an owned value instead of a reference as `ARGET` needs an owned value anyways.
     pub fn insert(&mut self, value: &ValkeyString) -> u64 {
@@ -244,5 +249,34 @@ mod tests {
         assert_array_entry(&array, 0, "foo");
         assert_array_entry(&array, 1, "bar");
         assert_array_entry(&array, 2, "quux");
+    }
+
+    #[test]
+    fn array_get_insert_cursor() {
+        let mut array = Array::new();
+
+        // Initial cursor on fresh Array
+        let res = array.get_insert_cursor();
+        assert_eq!(res, 0);
+
+        // First insert
+        array.insert(&vkstr("foo"));
+        let res = array.get_insert_cursor();
+        assert_eq!(res, 1);
+
+        // Deleting it again does not change the cursor
+        array.del(&0);
+        let res = array.get_insert_cursor();
+        assert_eq!(res, 1);
+
+        // Set a value at a higher position to check that it does not influence the cursor
+        array.set(&42, &vkstr("bar"));
+        let res = array.get_insert_cursor();
+        assert_eq!(res, 1);
+
+        // Final insertion to check that we're not stuck at 1
+        array.insert(&vkstr("foo"));
+        let res = array.get_insert_cursor();
+        assert_eq!(res, 2);
     }
 }

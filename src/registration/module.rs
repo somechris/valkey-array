@@ -19,6 +19,7 @@ valkey_module! {
         ["arget", commands::arget, "", 1, 1, 1],
         ["arinsert", commands::arinsert, "", 1, 1, 1],
         ["arlen", commands::arlen, "", 1, 1, 1],
+        ["arnext", commands::arnext, "", 1, 1, 1],
         ["arset", commands::arset, "", 1, 1, 1],
     ],
 }

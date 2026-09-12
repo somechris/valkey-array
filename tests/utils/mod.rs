@@ -61,6 +61,11 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARLEN").arg(key).query(self)
     }
 
+    /// The position for the next insert
+    fn arnext(&mut self, key: &str) -> RedisResult<u64> {
+        cmd("ARNEXT").arg(key).query(self)
+    }
+
     /// Sets an element in the array
     fn arset(&mut self, key: &str, position: u64, value: &str) -> RedisResult<u64> {
         cmd("ARSET").arg(key).arg(position).arg(value).query(self)

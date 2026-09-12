@@ -15,4 +15,5 @@ add_command!(ardel);
 add_command!(arget);
 add_command!(arinsert);
 add_command!(arlen);
+add_command!(arnext);
 add_command!(arset);
