@@ -24,3 +24,5 @@ docs:
 
 test:
 	cargo test
+
+full-monty: fix test docs
