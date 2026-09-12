@@ -22,7 +22,7 @@ fix:
 docs:
 	cargo doc --no-deps
 
-test:
+test: build-dev  # Running `build-dev` before ensures the integration tests can load the newest module
 	cargo test
 
 full-monty: fix test docs
