@@ -82,6 +82,11 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARMGET").arg(key).arg(positions).query(self)
     }
 
+    /// Sets multiple elements
+    fn armset(&mut self, key: &str, positions: &[(u64, &str)]) -> RedisResult<u64> {
+        cmd("ARMSET").arg(key).arg(positions).query(self)
+    }
+
     /// The position for the next insert
     fn arnext(&mut self, key: &str) -> RedisResult<u64> {
         cmd("ARNEXT").arg(key).query(self)

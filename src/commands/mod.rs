@@ -19,6 +19,7 @@ add_command!(arinsert);
 add_command!(arinfo);
 add_command!(arlen);
 add_command!(armget);
+add_command!(armset);
 add_command!(arnext);
 add_command!(arring);
 add_command!(arseek);

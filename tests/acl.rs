@@ -29,6 +29,7 @@ fn basic() {
         "arinsert".to_string(),
         "arlen".to_string(),
         "armget".to_string(),
+        "armset".to_string(),
         "arnext".to_string(),
         "arring".to_string(),
         "arseek".to_string(),

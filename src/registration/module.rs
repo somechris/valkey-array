@@ -26,6 +26,7 @@ valkey_module! {
         ["arinsert", commands::arinsert, "write fast deny-oom", 1, 1, 1, "write fast array"],
         ["arlen", commands::arlen, "readonly fast", 1, 1, 1, "read fast array"],
         ["armget", commands::armget, "readonly", 1, 1, 1, "read array"],
+        ["armset", commands::armset, "write", 1, 1, 1, "write array"],
         ["arnext", commands::arnext, "readonly fast", 1, 1, 1, "read fast array"],
         ["arring", commands::arring, "write fast deny-oom", 1, 1, 1, "write fast array"],
         ["arseek", commands::arseek, "write fast", 1, 1, 1, "write fast array"],
