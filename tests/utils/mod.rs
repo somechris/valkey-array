@@ -1,6 +1,6 @@
 //! Utils for integration tests
 
-use redis::{Connection, ConnectionLike, RedisResult, cmd};
+use redis::{Connection, ConnectionLike, FromRedisValue, RedisResult, cmd};
 use redis_test::utils::CommandMultiArgs;
 use redis_test::{TestContext, TestContextBuilder};
 use std::collections::HashMap;
@@ -90,6 +90,17 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     /// The position for the next insert
     fn arnext(&mut self, key: &str) -> RedisResult<u64> {
         cmd("ARNEXT").arg(key).query(self)
+    }
+
+    /// Runs an operaton on a range of an array
+    fn arop<T: FromRedisValue>(
+        &mut self,
+        key: &str,
+        start: u64,
+        end: u64,
+        op: &str,
+    ) -> RedisResult<T> {
+        cmd("AROP").arg(key).arg(start).arg(end).arg(op).query(self)
     }
 
     /// Inserts an element in a ring-buffer fashion

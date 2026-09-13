@@ -1,0 +1,111 @@
+//! Integration test for the `AROP` command
+
+pub mod utils;
+
+use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
+use assertables::assert_contains;
+use redis::{TypedCommands, Value, cmd};
+use redis_test::TestContextBuilder;
+
+#[test]
+fn faulty_calls() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Too few arguments
+    let err = cmd("AROP")
+        .arg("foo")
+        .arg("23")
+        .arg("42")
+        .query::<Value>(&mut con)
+        .unwrap_err();
+    assert_contains!(err.to_string(), "wrong");
+
+    // Too many arguments
+    let err = cmd("AROP")
+        .arg("foo")
+        .arg("23")
+        .arg("42")
+        .arg("USED")
+        .arg("bar")
+        .query::<Value>(&mut con)
+        .unwrap_err();
+    assert_contains!(err.to_string(), "wrong");
+
+    // Wrong type for start
+    let err = cmd("AROP")
+        .arg("foo")
+        .arg("bar")
+        .arg("42")
+        .arg("USED")
+        .query::<Value>(&mut con)
+        .unwrap_err();
+    assert_contains!(err.to_string(), "integer");
+
+    // Wrong type for end
+    let err = cmd("AROP")
+        .arg("foo")
+        .arg("23")
+        .arg("bar")
+        .arg("USED")
+        .query::<Value>(&mut con)
+        .unwrap_err();
+    assert_contains!(err.to_string(), "integer");
+
+    // Unknown operation
+    let err = cmd("AROP")
+        .arg("foo")
+        .arg("23")
+        .arg("42")
+        .arg("BAZ")
+        .query::<Value>(&mut con)
+        .unwrap_err();
+    assert_contains!(err.to_string(), "operation");
+
+    // Operating on non-array type
+    con.set("bar", "baz").unwrap();
+    let err = con.arop::<Value>("bar", 38, 42, "USED").unwrap_err();
+    assert_eq!(err.code().unwrap(), "WRONGTYPE");
+}
+
+#[test]
+fn used_simple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "value-37").unwrap();
+    con.arset("foo", 38, "value-38").unwrap();
+    con.arset("foo", 39, "value-39").unwrap();
+    // Position 40 is left empty
+    con.arset("foo", 41, "value-41").unwrap();
+    con.arset("foo", 42, "value-42").unwrap();
+    con.arset("foo", 43, "value-43").unwrap();
+
+    // Getting used entries from 64--68 (no position in that range has a value)
+    let res: u64 = con.arop("foo", 64, 68, "USED").unwrap();
+    assert_eq!(res, 0);
+
+    // Getting from 38-42 (4 positions have a value)
+    let res: u64 = con.arop("foo", 38, 42, "USED").unwrap();
+    assert_eq!(res, 4);
+}
+
+#[test]
+fn reverse() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "value-37").unwrap();
+    con.arset("foo", 38, "value-38").unwrap();
+    con.arset("foo", 39, "value-39").unwrap();
+    // Position 40 is left empty
+    con.arset("foo", 41, "value-41").unwrap();
+    con.arset("foo", 42, "value-42").unwrap();
+    con.arset("foo", 43, "value-43").unwrap();
+
+    // Getting from 38-42 (4 positions have a value), but start/end are reversed
+    let res: u64 = con.arop("foo", 42, 38, "USED").unwrap();
+    assert_eq!(res, 4);
+}

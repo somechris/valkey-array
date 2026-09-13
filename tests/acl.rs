@@ -31,6 +31,7 @@ fn basic() {
         "armget".to_string(),
         "armset".to_string(),
         "arnext".to_string(),
+        "arop".to_string(),
         "arring".to_string(),
         "arscan".to_string(),
         "arseek".to_string(),

@@ -13,6 +13,7 @@
 //! * [`ARMGET`](commands::armget()) - gets multiple values from an array
 //! * [`ARMSET`](commands::armset()) - sets multiple values in an array
 //! * [`ARNEXT`](commands::arnext()) - gets the position for the next insert
+//! * [`AROP`](commands::arop()) - runs an operation on a range of an array
 //! * [`ARRING`](commands::arring()) - insert an element in ring-buffer fashion
 //! * [`ARSCAN`](commands::arscan()) - gets existing positions and values in a range
 //! * [`ARSEEK`](commands::arseek()) - sets the position for the next insert
