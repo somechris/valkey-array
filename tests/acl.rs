@@ -28,6 +28,7 @@ fn basic() {
         "arinfo".to_string(),
         "arinsert".to_string(),
         "arlen".to_string(),
+        "armget".to_string(),
         "arnext".to_string(),
         "arring".to_string(),
         "arseek".to_string(),

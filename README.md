@@ -12,6 +12,7 @@ valkey-array is a [Valkey](https://valkey.io/) module implementing array command
 * `ARINFO` - gives information about the array
 * `ARINSERT` - inserts an element into the array
 * `ARLEN` - gets an array's highest used position + 1
+* `ARMGET` - gets multiple values from an array
 * `ARNEXT` - gets the position for the next insert
 * `ARRING` - insert an element in ring-buffer fashion
 * `ARSEEK` - sets the position for the next insert

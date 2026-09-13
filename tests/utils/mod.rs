@@ -77,6 +77,11 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARLEN").arg(key).query(self)
     }
 
+    /// Gets multiple elements
+    fn armget(&mut self, key: &str, positions: &[u64]) -> RedisResult<Vec<Option<String>>> {
+        cmd("ARMGET").arg(key).arg(positions).query(self)
+    }
+
     /// The position for the next insert
     fn arnext(&mut self, key: &str) -> RedisResult<u64> {
         cmd("ARNEXT").arg(key).query(self)
