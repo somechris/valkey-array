@@ -4,7 +4,7 @@ pub mod utils;
 
 use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
 use assertables::assert_contains;
-use redis::{TypedCommands, cmd};
+use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
 
 #[test]
@@ -15,7 +15,7 @@ fn faulty_calls() {
     // Too few arguments
     let err = cmd("ARINSERT")
         .arg("foo")
-        .query::<u64>(&mut con)
+        .query::<Value>(&mut con)
         .unwrap_err();
     assert_contains!(err.to_string(), "wrong");
 
@@ -24,7 +24,7 @@ fn faulty_calls() {
         .arg("foo")
         .arg("bar")
         .arg("baz")
-        .query::<u64>(&mut con)
+        .query::<Value>(&mut con)
         .unwrap_err();
     assert_contains!(err.to_string(), "wrong");
 
