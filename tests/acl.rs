@@ -22,6 +22,7 @@ fn basic() {
     let expected = HashSet::from([
         "arcount".to_string(),
         "ardel".to_string(),
+        "ardelrange".to_string(),
         "arget".to_string(),
         "arinfo".to_string(),
         "arinsert".to_string(),

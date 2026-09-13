@@ -47,6 +47,11 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARDEL").arg(key).arg(position).query(self)
     }
 
+    /// Deletes a range of elements
+    fn ardelrange(&mut self, key: &str, start: u64, end: u64) -> RedisResult<u64> {
+        cmd("ARDELRANGE").arg(key).arg(start).arg(end).query(self)
+    }
+
     /// Gets an element from the array
     fn arget(&mut self, key: &str, position: u64) -> RedisResult<Option<String>> {
         cmd("ARGET").arg(key).arg(position).query(self)
