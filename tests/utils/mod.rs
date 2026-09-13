@@ -106,6 +106,23 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARSCAN").arg(key).arg(start).arg(end).query(self)
     }
 
+    /// Scans a range for key/values while limiting the amount of returned pairs
+    fn arscan_limited(
+        &mut self,
+        key: &str,
+        start: u64,
+        end: u64,
+        limit: u64,
+    ) -> RedisResult<Vec<(u64, String)>> {
+        cmd("ARSCAN")
+            .arg(key)
+            .arg(start)
+            .arg(end)
+            .arg("LIMIT")
+            .arg(limit)
+            .query(self)
+    }
+
     /// Sets the position for the next insert
     fn arseek(&mut self, key: &str, position: u64) -> RedisResult<u64> {
         cmd("ARSEEK").arg(key).arg(position).query(self)

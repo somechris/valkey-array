@@ -109,3 +109,30 @@ fn reversed() {
         ]
     );
 }
+
+#[test]
+fn limited() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "value-37").unwrap();
+    con.arset("foo", 38, "value-38").unwrap();
+    // Position 39 is left empty
+    con.arset("foo", 40, "value-40").unwrap();
+    // Position 40 is left empty
+    // Position 41 is left empty
+    con.arset("foo", 42, "value-42").unwrap();
+    con.arset("foo", 43, "value-43").unwrap();
+
+    // Getting from 23-42 (inclusive)
+    let res = con.arscan_limited("foo", 23, 42, 3).unwrap();
+    assert_eq!(
+        res,
+        vec![
+            (37, "value-37".to_string()),
+            (38, "value-38".to_string()),
+            (40, "value-40".to_string()),
+        ]
+    );
+}
