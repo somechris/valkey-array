@@ -22,5 +22,6 @@ add_command!(armget);
 add_command!(armset);
 add_command!(arnext);
 add_command!(arring);
+add_command!(arscan);
 add_command!(arseek);
 add_command!(arset);

@@ -16,6 +16,7 @@ valkey-array is a [Valkey](https://valkey.io/) module implementing array command
 * `ARMSET` - sets multiple values in an array
 * `ARNEXT` - gets the position for the next insert
 * `ARRING` - insert an element in ring-buffer fashion
+* `ARSCAN` - gets existing positions and values in a range
 * `ARSEEK` - sets the position for the next insert
 * `ARSET` - sets values in an array
 

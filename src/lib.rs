@@ -14,6 +14,7 @@
 //! * [`ARMSET`](commands::armset()) - sets multiple values in an array
 //! * [`ARNEXT`](commands::arnext()) - gets the position for the next insert
 //! * [`ARRING`](commands::arring()) - insert an element in ring-buffer fashion
+//! * [`ARSCAN`](commands::arscan()) - gets existing positions and values in a range
 //! * [`ARSEEK`](commands::arseek()) - sets the position for the next insert
 //! * [`ARSET`](commands::arset()) - sets values in an array
 //!

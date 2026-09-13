@@ -32,6 +32,7 @@ fn basic() {
         "armset".to_string(),
         "arnext".to_string(),
         "arring".to_string(),
+        "arscan".to_string(),
         "arseek".to_string(),
         "arset".to_string(),
     ]);
