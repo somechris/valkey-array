@@ -57,6 +57,11 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARGET").arg(key).arg(position).query(self)
     }
 
+    /// Gets a range of elements
+    fn argetrange(&mut self, key: &str, start: u64, end: u64) -> RedisResult<Vec<Option<String>>> {
+        cmd("ARGETRANGE").arg(key).arg(start).arg(end).query(self)
+    }
+
     /// Inserts an element into the array at the insert cursor
     fn arinfo(&mut self, key: &str) -> RedisResult<HashMap<String, String>> {
         cmd("ARINFO").arg(key).query(self)

@@ -8,6 +8,7 @@ valkey-array is a [Valkey](https://valkey.io/) module implementing array command
 * `ARDEL` - deletes values from an array
 * `ARDELRANGE` - deletes a range of values from an array
 * `ARGET` - gets values from an array
+* `ARGETRANGE` - gets a range of values from an array
 * `ARINFO` - gives information about the array
 * `ARINSERT` - inserts an element into the array
 * `ARLEN` - gets an array's highest used position + 1

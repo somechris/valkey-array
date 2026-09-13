@@ -14,6 +14,7 @@ add_command!(arcount);
 add_command!(ardel);
 add_command!(ardelrange);
 add_command!(arget);
+add_command!(argetrange);
 add_command!(arinsert);
 add_command!(arinfo);
 add_command!(arlen);
