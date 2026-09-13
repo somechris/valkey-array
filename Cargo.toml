@@ -8,6 +8,11 @@ repository = "https://github.com/somechris/valkey-array"
 readme = "README.md"
 description = "An array module for Valkey"
 
+[features]
+default = ["min-valkey-compatibility-version-8-0"]
+# This feature needs to be available for `valkey-module` `0.1.14` when adding acls
+min-valkey-compatibility-version-8-0 = ["valkey-module/min-valkey-compatibility-version-8-0"]
+
 [dependencies]
 valkey-module = "0.1.14"
 
