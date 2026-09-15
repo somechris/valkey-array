@@ -130,6 +130,25 @@ fn min_simple() {
 }
 
 #[test]
+fn and_simple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "11").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "7.42").unwrap(); // ANDs initial value to 7
+    con.arset("foo", 39, "value-38").unwrap(); // not considered (not a number)
+    // Position 40 is left empty, hence not considered
+    con.arset("foo", 41, "5").unwrap(); // ANDs 7 to 5
+    con.arset("foo", 42, "-2").unwrap(); // ANDs 5 to 4
+    con.arset("foo", 43, "4096").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value, 3 contribute)
+    let res: String = con.arop("foo", 38, 42, "AND").unwrap();
+    assert_eq!(res, "4");
+}
+
+#[test]
 fn sum_simple() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
