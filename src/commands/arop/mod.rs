@@ -12,6 +12,8 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 ///
 /// These are needed to parse the operation (and eventually failing) before opening the key.
 pub enum SubstituteOperation {
+    /// Sums numeric items
+    Sum,
     /// Counts the used positions
     Used,
 }
@@ -45,6 +47,7 @@ fn act_on_range(
 ) -> ValkeyResult {
     use SubstituteOperation::*;
     match op_subst {
+        Sum => act_on_range_typed(array, start, end, ops::SumOperation::new()),
         Used => act_on_range_typed(array, start, end, ops::UsedOperation::new()),
     }
 }
@@ -63,6 +66,7 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         .to_ascii_uppercase()
         .as_str()
     {
+        "SUM" => SubstituteOperation::Sum,
         "USED" => SubstituteOperation::Used,
         _ => return Err(ValkeyError::Str("ERR Unknown AROP operation")),
     };

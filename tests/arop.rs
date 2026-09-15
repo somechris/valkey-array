@@ -92,6 +92,25 @@ fn used_simple() {
 }
 
 #[test]
+fn sum_simple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "11").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "23").unwrap(); // summed (integer)
+    con.arset("foo", 39, "value-38").unwrap(); // not summed (not a number)
+    // Position 40 is left empty, hence not summed
+    con.arset("foo", 41, "-42").unwrap(); // summed (negative)
+    con.arset("foo", 42, "-.4711").unwrap(); // summed (float)
+    con.arset("foo", 43, "4096").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (3 positions have a value)
+    let res: String = con.arop("foo", 38, 42, "SUM").unwrap();
+    assert_eq!(res, "-19.4711");
+}
+
+#[test]
 fn reverse() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();

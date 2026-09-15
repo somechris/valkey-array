@@ -2,8 +2,10 @@
 
 use valkey_module::{ValkeyString, ValkeyValue};
 
+mod sum;
 mod used;
 
+pub use sum::SumOperation;
 pub use used::UsedOperation;
 
 /// An [`Operation`]s functions
