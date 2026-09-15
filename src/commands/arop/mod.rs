@@ -24,6 +24,8 @@ pub enum SubstituteOperation {
     Sum,
     /// Counts the used positions
     Used,
+    /// Converts numeric items to integers and binary `XOR`s them (Null if there were no items)
+    Xor,
 }
 
 /// Executes the command on each position in the range (inclusive)
@@ -61,6 +63,7 @@ fn act_on_range(
         Or => act_on_range_typed(array, start, end, ops::OrOperation::new()),
         Sum => act_on_range_typed(array, start, end, ops::SumOperation::new()),
         Used => act_on_range_typed(array, start, end, ops::UsedOperation::new()),
+        Xor => act_on_range_typed(array, start, end, ops::XorOperation::new()),
     }
 }
 
@@ -84,6 +87,7 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         "OR" => SubstituteOperation::Or,
         "SUM" => SubstituteOperation::Sum,
         "USED" => SubstituteOperation::Used,
+        "XOR" => SubstituteOperation::Xor,
         _ => return Err(ValkeyError::Str("ERR Unknown AROP operation")),
     };
 

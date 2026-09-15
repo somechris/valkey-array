@@ -168,6 +168,25 @@ fn or_simple() {
 }
 
 #[test]
+fn xor_simple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "11").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "1.42").unwrap(); // XORs inital value to 1
+    con.arset("foo", 39, "value-38").unwrap(); // not considered (not a number)
+    // Position 40 is left empty, hence not considered
+    con.arset("foo", 41, "3").unwrap(); // XORs 1 to 2
+    con.arset("foo", 42, "-8").unwrap(); // XORs 2 to -6
+    con.arset("foo", 43, "4096").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value, 3 contribute)
+    let res: String = con.arop("foo", 38, 42, "XOR").unwrap();
+    assert_eq!(res, "-6");
+}
+
+#[test]
 fn sum_simple() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();

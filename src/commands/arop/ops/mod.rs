@@ -8,6 +8,7 @@ mod min;
 mod or;
 mod sum;
 mod used;
+mod xor;
 
 pub mod utils;
 
@@ -17,6 +18,7 @@ pub use min::MinOperation;
 pub use or::OrOperation;
 pub use sum::SumOperation;
 pub use used::UsedOperation;
+pub use xor::XorOperation;
 
 /// An [`Operation`]s functions
 pub trait Operation {
