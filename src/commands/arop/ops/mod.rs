@@ -2,9 +2,11 @@
 
 use valkey_module::{ValkeyString, ValkeyValue};
 
+mod min;
 mod sum;
 mod used;
 
+pub use min::MinOperation;
 pub use sum::SumOperation;
 pub use used::UsedOperation;
 

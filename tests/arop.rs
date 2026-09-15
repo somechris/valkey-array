@@ -92,6 +92,25 @@ fn used_simple() {
 }
 
 #[test]
+fn min_simple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "11").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "23").unwrap(); // initial min
+    con.arset("foo", 39, "value-38").unwrap(); // not considered (not a number)
+    // Position 40 is left empty, hence not considered
+    con.arset("foo", 41, "-471.1").unwrap(); // final min
+    con.arset("foo", 42, "-4.2").unwrap(); // above min
+    con.arset("foo", 43, "4096").unwrap(); // not summed (not in range)
+
+    // Getting from 38-42 (4 positions have a value, 3 contribute)
+    let res: String = con.arop("foo", 38, 42, "MIN").unwrap();
+    assert_eq!(res, "-471.1");
+}
+
+#[test]
 fn sum_simple() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
