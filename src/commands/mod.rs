@@ -1,28 +1,36 @@
 //! Implementations of array commands
 
+pub mod arcount;
+pub mod ardel;
+pub mod ardelrange;
+pub mod arget;
+pub mod argetrange;
+pub mod arinfo;
+pub mod arinsert;
+pub mod arlen;
+pub mod armget;
+pub mod armset;
+pub mod arnext;
+pub mod arop;
+pub mod arring;
+pub mod arscan;
+pub mod arseek;
+pub mod arset;
 pub mod utils;
 
-/// Import a command's module and publishes the command
-macro_rules! add_command {
-    ($name:ident) => {
-        pub mod $name;
-        pub use $name::$name;
-    };
-}
-
-add_command!(arcount);
-add_command!(ardel);
-add_command!(ardelrange);
-add_command!(arget);
-add_command!(argetrange);
-add_command!(arinsert);
-add_command!(arinfo);
-add_command!(arlen);
-add_command!(armget);
-add_command!(armset);
-add_command!(arnext);
-add_command!(arop);
-add_command!(arring);
-add_command!(arscan);
-add_command!(arseek);
-add_command!(arset);
+pub use arcount::arcount;
+pub use ardel::ardel;
+pub use ardelrange::ardelrange;
+pub use arget::arget;
+pub use argetrange::argetrange;
+pub use arinfo::arinfo;
+pub use arinsert::arinsert;
+pub use arlen::arlen;
+pub use armget::armget;
+pub use armset::armset;
+pub use arnext::arnext;
+pub use arop::arop;
+pub use arring::arring;
+pub use arscan::arscan;
+pub use arseek::arseek;
+pub use arset::arset;
