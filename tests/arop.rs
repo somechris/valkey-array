@@ -92,6 +92,25 @@ fn used_simple() {
 }
 
 #[test]
+fn max_simple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "11").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "42").unwrap(); // initial max
+    con.arset("foo", 39, "value-380").unwrap(); // not considered (not a number)
+    // Position 40 is left empty, hence not considered
+    con.arset("foo", 41, "4096").unwrap(); // final max
+    con.arset("foo", 42, "-4.2").unwrap(); // below max (float)
+    con.arset("foo", 43, "23").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value, 3 contribute)
+    let res: String = con.arop("foo", 38, 42, "MAX").unwrap();
+    assert_eq!(res, "4096");
+}
+
+#[test]
 fn min_simple() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();

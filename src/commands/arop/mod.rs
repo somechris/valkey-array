@@ -12,6 +12,8 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 ///
 /// These are needed to parse the operation (and eventually failing) before opening the key.
 pub enum SubstituteOperation {
+    /// Maximum of numeric items (Null if there were no items)
+    Max,
     /// Minimum of numeric items (Null if there were no items)
     Min,
     /// Sums numeric items
@@ -49,6 +51,7 @@ fn act_on_range(
 ) -> ValkeyResult {
     use SubstituteOperation::*;
     match op_subst {
+        Max => act_on_range_typed(array, start, end, ops::MaxOperation::new()),
         Min => act_on_range_typed(array, start, end, ops::MinOperation::new()),
         Sum => act_on_range_typed(array, start, end, ops::SumOperation::new()),
         Used => act_on_range_typed(array, start, end, ops::UsedOperation::new()),
@@ -69,6 +72,7 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         .to_ascii_uppercase()
         .as_str()
     {
+        "MAX" => SubstituteOperation::Max,
         "MIN" => SubstituteOperation::Min,
         "SUM" => SubstituteOperation::Sum,
         "USED" => SubstituteOperation::Used,
