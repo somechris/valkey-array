@@ -1,24 +1,52 @@
 //! Implementation of the `AROP` command
 
+mod ops;
+
 use crate::Array;
+use crate::commands::arop::ops::Operation;
 use crate::commands::utils::{err_if_further_arguments, read_write_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
+/// Substitutes for available operations
+///
+/// These are needed to parse the operation (and eventually failing) before opening the key.
+pub enum SubstituteOperation {
+    /// Counts the used positions
+    Used,
+}
+
 /// Executes the command on each position in the range (inclusive)
-fn act_on_range(array: &mut Array, mut start: u64, mut end: u64) -> ValkeyValue {
+fn act_on_range_typed<OP: Operation>(
+    array: &mut Array,
+    mut start: u64,
+    mut end: u64,
+    mut op: OP,
+) -> ValkeyResult {
     if end < start {
         std::mem::swap(&mut end, &mut start);
     }
 
-    let mut acc: i64 = 0;
+    //let (accumulate, build_result) = op.get_funcs();
     for position in start..=end {
-        if array.get(&position).is_some() {
-            acc += 1;
+        if let Some(value) = array.get(&position) {
+            op.accumulate(value);
         }
     }
 
-    acc.into()
+    Ok(op.build_result())
+}
+
+fn act_on_range(
+    array: &mut Array,
+    start: u64,
+    end: u64,
+    op_subst: SubstituteOperation,
+) -> ValkeyResult {
+    use SubstituteOperation::*;
+    match op_subst {
+        Used => act_on_range_typed(array, start, end, ops::UsedOperation::new()),
+    }
 }
 
 /// Implements the `AROP` command
@@ -29,28 +57,27 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let end = &arg_iter.next_u64()?;
 
     // Parse operation
-    if arg_iter
+    let op_subst = match arg_iter
         .next_arg()?
         .to_string()
         .to_ascii_uppercase()
         .as_str()
-        != "USED"
     {
-        return Err(ValkeyError::Str("ERR Unknown AROP operation"));
-    }
+        "USED" => SubstituteOperation::Used,
+        _ => return Err(ValkeyError::Str("ERR Unknown AROP operation")),
+    };
 
     err_if_further_arguments(arg_iter)?;
 
-    let result = read_write_action!(
+    read_write_action!(
         ctx,
         key_name,
         ValkeyValue::Array(Vec::new()),
         act_on_range,
         *start,
-        *end
-    );
-
-    Ok(result)
+        *end,
+        op_subst
+    )
 }
 
 #[cfg(test)]
