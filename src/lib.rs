@@ -67,4 +67,7 @@ mod array;
 pub mod commands;
 pub mod registration;
 
+#[cfg(test)]
+mod test_utils;
+
 pub use array::Array;

@@ -149,11 +149,7 @@ impl Array {
 mod tests {
     mod util {
         use crate::Array;
-        use valkey_module::ValkeyString;
-
-        pub fn vkstr<S: Into<String>>(input: S) -> ValkeyString {
-            ValkeyString::test(input.into())
-        }
+        use crate::test_utils::vkstr;
 
         #[allow(clippy::panic, reason = "assertions are allowed to crash out")]
         pub fn assert_array_entry<S: Into<String>>(array: &Array, position: u64, expected: S) {
@@ -174,7 +170,8 @@ mod tests {
     }
 
     use crate::Array;
-    use crate::array::tests::util::{assert_array_entry, assert_array_no_entry, vkstr};
+    use crate::array::tests::util::{assert_array_entry, assert_array_no_entry};
+    use crate::test_utils::vkstr;
     use std::collections::HashMap;
 
     #[test]
