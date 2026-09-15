@@ -14,6 +14,8 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 pub enum SubstituteOperation {
     /// Converts numeric items to integers and binary `AND`s them (Null if there were no items)
     And,
+    /// Counts the number of items that exactly match the search expression
+    Match(ValkeyString),
     /// Maximum of numeric items (Null if there were no items)
     Max,
     /// Minimum of numeric items (Null if there were no items)
@@ -59,6 +61,9 @@ fn act_on_range(
     match op_subst {
         And => act_on_range_typed(array, start, end, ops::AndOperation::new()),
         Max => act_on_range_typed(array, start, end, ops::MaxOperation::new()),
+        Match(search_expr) => {
+            act_on_range_typed(array, start, end, ops::MatchOperation::new(search_expr))
+        }
         Min => act_on_range_typed(array, start, end, ops::MinOperation::new()),
         Or => act_on_range_typed(array, start, end, ops::OrOperation::new()),
         Sum => act_on_range_typed(array, start, end, ops::SumOperation::new()),
@@ -82,6 +87,10 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         .as_str()
     {
         "AND" => SubstituteOperation::And,
+        "MATCH" => {
+            let search_expr = arg_iter.next_arg()?;
+            SubstituteOperation::Match(search_expr)
+        }
         "MAX" => SubstituteOperation::Max,
         "MIN" => SubstituteOperation::Min,
         "OR" => SubstituteOperation::Or,

@@ -206,6 +206,25 @@ fn sum_simple() {
 }
 
 #[test]
+fn match_simple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "foo").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "foo").unwrap(); // matched
+    con.arset("foo", 39, "bar").unwrap(); // not matched (different text)
+    // Position 40 is left empty, hence not considered
+    con.arset("foo", 41, "  foo  ").unwrap(); // not matched (extra whitespace)
+    con.arset("foo", 42, "foo").unwrap(); // matched
+    con.arset("foo", 43, "foo").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value, 2 match)
+    let res: String = con.arop_ex("foo", 38, 42, "MATCH", "foo").unwrap();
+    assert_eq!(res, "2");
+}
+
+#[test]
 fn reverse() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();

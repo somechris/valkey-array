@@ -103,6 +103,24 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("AROP").arg(key).arg(start).arg(end).arg(op).query(self)
     }
 
+    /// Runs an operation with an extra parameter on a range of an array
+    fn arop_ex<T: FromRedisValue>(
+        &mut self,
+        key: &str,
+        start: u64,
+        end: u64,
+        op: &str,
+        extra_param: &str,
+    ) -> RedisResult<T> {
+        cmd("AROP")
+            .arg(key)
+            .arg(start)
+            .arg(end)
+            .arg(op)
+            .arg(extra_param)
+            .query(self)
+    }
+
     /// Inserts an element in a ring-buffer fashion
     fn arring(&mut self, key: &str, buffer_size: u64, value: &str) -> RedisResult<u64> {
         cmd("ARRING")

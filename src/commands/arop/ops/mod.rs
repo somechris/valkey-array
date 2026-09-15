@@ -3,6 +3,7 @@
 use valkey_module::{ValkeyString, ValkeyValue};
 
 mod and;
+mod r#match;
 mod max;
 mod min;
 mod or;
@@ -13,6 +14,7 @@ mod xor;
 pub mod utils;
 
 pub use and::AndOperation;
+pub use r#match::MatchOperation;
 pub use max::MaxOperation;
 pub use min::MinOperation;
 pub use or::OrOperation;
