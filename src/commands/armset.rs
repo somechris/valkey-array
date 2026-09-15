@@ -27,7 +27,13 @@ pub fn armset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         pairs.push((position, value));
     }
 
-    let count = read_write_action!(ctx, key_name, ValkeyValue::Array(Vec::new()), act_on_pairs, pairs);
+    let count = read_write_action!(
+        ctx,
+        key_name,
+        ValkeyValue::Array(Vec::new()),
+        act_on_pairs,
+        pairs
+    );
 
     Ok(ValkeyValue::Integer(count as i64))
 }

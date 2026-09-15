@@ -27,7 +27,14 @@ pub fn ardelrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     err_if_further_arguments(arg_iter)?;
 
-    let count = read_write_action!(ctx, key_name, ValkeyValue::Integer(0), act_on_range, *start, *end);
+    let count = read_write_action!(
+        ctx,
+        key_name,
+        ValkeyValue::Integer(0),
+        act_on_range,
+        *start,
+        *end
+    );
 
     Ok(ValkeyValue::Integer(count as i64))
 }

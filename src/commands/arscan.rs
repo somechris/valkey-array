@@ -6,7 +6,12 @@ use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Executes the command on each position in the range (inclusive)
-fn act_on_range(array: &mut Array, mut start: u64, mut end: u64, opt_limit: Option<u64>) -> Vec<ValkeyValue> {
+fn act_on_range(
+    array: &mut Array,
+    mut start: u64,
+    mut end: u64,
+    opt_limit: Option<u64>,
+) -> Vec<ValkeyValue> {
     if end < start {
         std::mem::swap(&mut end, &mut start);
     }
@@ -41,13 +46,21 @@ pub fn arscan(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     // Parse optional limit
     if let Some(arg) = arg_iter.next() {
         match arg.to_string().to_ascii_uppercase().as_str() {
-            "LIMIT" => opt_limit =Some(arg_iter.next_u64()?),
+            "LIMIT" => opt_limit = Some(arg_iter.next_u64()?),
             _ => return Err(ValkeyError::WrongArity),
         }
         err_if_further_arguments(arg_iter)?;
     }
 
-    let items = read_write_action!(ctx, key_name, ValkeyValue::Array(Vec::new()), act_on_range, *start, *end, opt_limit);
+    let items = read_write_action!(
+        ctx,
+        key_name,
+        ValkeyValue::Array(Vec::new()),
+        act_on_range,
+        *start,
+        *end,
+        opt_limit
+    );
 
     Ok(ValkeyValue::Array(items))
 }

@@ -1,9 +1,9 @@
 //! Implementation of the `ARINFO` command
 
-use std::collections::HashMap;
 use crate::Array;
 use crate::commands::utils::{err_if_further_arguments, read_only_action, to_arg_iter};
 use crate::registration::VKARRAY;
+use std::collections::HashMap;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Implements the `ARINFO` command

@@ -29,13 +29,26 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let end = &arg_iter.next_u64()?;
 
     // Parse operation
-    if arg_iter.next_arg()?.to_string().to_ascii_uppercase().as_str() != "USED" {
-        return Err(ValkeyError::Str("ERR Unknown AROP operation"))
+    if arg_iter
+        .next_arg()?
+        .to_string()
+        .to_ascii_uppercase()
+        .as_str()
+        != "USED"
+    {
+        return Err(ValkeyError::Str("ERR Unknown AROP operation"));
     }
 
     err_if_further_arguments(arg_iter)?;
 
-    let result = read_write_action!(ctx, key_name, ValkeyValue::Array(Vec::new()), act_on_range, *start, *end);
+    let result = read_write_action!(
+        ctx,
+        key_name,
+        ValkeyValue::Array(Vec::new()),
+        act_on_range,
+        *start,
+        *end
+    );
 
     Ok(result)
 }

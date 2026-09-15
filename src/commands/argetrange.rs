@@ -11,10 +11,12 @@ fn act_on_range(array: &mut Array, mut start: u64, mut end: u64) -> Vec<ValkeyVa
         std::mem::swap(&mut end, &mut start);
     }
 
-    (start..=end).map(|position| match array.get(&position) {
-        Some(str) => str.into(),
-        None => ValkeyValue::Null,
-    }).collect()
+    (start..=end)
+        .map(|position| match array.get(&position) {
+            Some(str) => str.into(),
+            None => ValkeyValue::Null,
+        })
+        .collect()
 }
 
 /// Implements the `ARGETRANGE` command
@@ -26,7 +28,14 @@ pub fn argetrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     err_if_further_arguments(arg_iter)?;
 
-    let items = read_write_action!(ctx, key_name, ValkeyValue::Array(Vec::new()), act_on_range, *start, *end);
+    let items = read_write_action!(
+        ctx,
+        key_name,
+        ValkeyValue::Array(Vec::new()),
+        act_on_range,
+        *start,
+        *end
+    );
 
     Ok(ValkeyValue::Array(items))
 }
