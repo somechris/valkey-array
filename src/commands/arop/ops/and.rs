@@ -18,11 +18,13 @@ impl Default for AndOperation {
     }
 }
 
-impl Operation for AndOperation {
-    fn new() -> Self {
+impl AndOperation {
+    pub fn new() -> Self {
         Self::default()
     }
+}
 
+impl Operation for AndOperation {
     fn accumulate(&mut self, value: ValkeyString) {
         if let Ok(integer) = vkstring_to_floored_i64(value) {
             self.result &= integer;

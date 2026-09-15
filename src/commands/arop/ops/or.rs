@@ -10,11 +10,13 @@ pub struct OrOperation {
     found_elements: bool,
 }
 
-impl Operation for OrOperation {
-    fn new() -> Self {
+impl OrOperation {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
+}
 
+impl Operation for OrOperation {
     fn accumulate(&mut self, value: ValkeyString) {
         if let Ok(integer) = vkstring_to_floored_i64(value) {
             self.result |= integer;

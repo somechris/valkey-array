@@ -8,10 +8,13 @@ pub struct UsedOperation {
     counter: i64,
 }
 
-impl Operation for UsedOperation {
-    fn new() -> Self {
+impl UsedOperation {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
+}
+
+impl Operation for UsedOperation {
     fn accumulate(&mut self, _value: ValkeyString) {
         self.counter += 1;
     }

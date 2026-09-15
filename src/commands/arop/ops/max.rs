@@ -17,11 +17,13 @@ impl Default for MaxOperation {
     }
 }
 
-impl Operation for MaxOperation {
-    fn new() -> Self {
+impl MaxOperation {
+    pub fn new() -> Self {
         Self::default()
     }
+}
 
+impl Operation for MaxOperation {
     fn accumulate(&mut self, value: ValkeyString) {
         if let Ok(float) = value.parse_float() {
             self.maximum = self.maximum.max(float);

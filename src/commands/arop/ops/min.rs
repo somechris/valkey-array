@@ -17,11 +17,13 @@ impl Default for MinOperation {
     }
 }
 
-impl Operation for MinOperation {
-    fn new() -> Self {
+impl MinOperation {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
+}
 
+impl Operation for MinOperation {
     fn accumulate(&mut self, value: ValkeyString) {
         if let Ok(float) = value.parse_float() {
             self.minimum = self.minimum.min(float);

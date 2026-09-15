@@ -8,11 +8,13 @@ pub struct SumOperation {
     sum: f64,
 }
 
-impl Operation for SumOperation {
-    fn new() -> Self {
+impl SumOperation {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
+}
 
+impl Operation for SumOperation {
     fn accumulate(&mut self, value: ValkeyString) {
         if let Ok(float) = value.parse_float() {
             self.sum += float;

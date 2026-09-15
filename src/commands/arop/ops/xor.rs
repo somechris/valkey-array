@@ -10,11 +10,13 @@ pub struct XorOperation {
     found_elements: bool,
 }
 
-impl Operation for XorOperation {
-    fn new() -> Self {
+impl XorOperation {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
+}
 
+impl Operation for XorOperation {
     fn accumulate(&mut self, value: ValkeyString) {
         if let Ok(integer) = vkstring_to_floored_i64(value) {
             self.result ^= integer;
