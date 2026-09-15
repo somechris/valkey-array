@@ -5,6 +5,7 @@ use valkey_module::{ValkeyString, ValkeyValue};
 mod and;
 mod max;
 mod min;
+mod or;
 mod sum;
 mod used;
 
@@ -13,6 +14,7 @@ pub mod utils;
 pub use and::AndOperation;
 pub use max::MaxOperation;
 pub use min::MinOperation;
+pub use or::OrOperation;
 pub use sum::SumOperation;
 pub use used::UsedOperation;
 

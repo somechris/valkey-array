@@ -18,6 +18,8 @@ pub enum SubstituteOperation {
     Max,
     /// Minimum of numeric items (Null if there were no items)
     Min,
+    /// Converts numeric items to integers and binary `OR`s them (Null if there were no items)
+    Or,
     /// Sums numeric items
     Sum,
     /// Counts the used positions
@@ -56,6 +58,7 @@ fn act_on_range(
         And => act_on_range_typed(array, start, end, ops::AndOperation::new()),
         Max => act_on_range_typed(array, start, end, ops::MaxOperation::new()),
         Min => act_on_range_typed(array, start, end, ops::MinOperation::new()),
+        Or => act_on_range_typed(array, start, end, ops::OrOperation::new()),
         Sum => act_on_range_typed(array, start, end, ops::SumOperation::new()),
         Used => act_on_range_typed(array, start, end, ops::UsedOperation::new()),
     }
@@ -78,6 +81,7 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         "AND" => SubstituteOperation::And,
         "MAX" => SubstituteOperation::Max,
         "MIN" => SubstituteOperation::Min,
+        "OR" => SubstituteOperation::Or,
         "SUM" => SubstituteOperation::Sum,
         "USED" => SubstituteOperation::Used,
         _ => return Err(ValkeyError::Str("ERR Unknown AROP operation")),
