@@ -61,7 +61,7 @@ pub(crate) use read_only_action;
 ///
 /// If the key exists and is not an array, a `WRONGTYPE` error is returned
 macro_rules! read_write_action {
-    ($ctx:expr, $key_name:expr, $default:expr, $func:expr $(,$arg:expr)*) => {{
+    ($ctx:expr, $key_name:expr, $default:expr, $func:expr $(,$arg:expr)* $(,)?) => {{
         let key = $ctx.open_key_writable($key_name);
         let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
             return Err(ValkeyError::WrongType);
@@ -89,7 +89,7 @@ pub(crate) use read_write_action;
 ///
 /// If the key exists and is not an array, a `WRONGTYPE` error is returned
 macro_rules! read_write_creating_action {
-    ($ctx:expr, $key_name:expr, $func:expr $(,$arg:expr)*) => {{
+    ($ctx:expr, $key_name:expr, $func:expr $(,$arg:expr)* $(,)?) => {{
         let key = $ctx.open_key_writable($key_name);
         let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
             return Err(ValkeyError::WrongType);
