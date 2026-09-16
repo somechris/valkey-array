@@ -85,6 +85,27 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
             .query(self)
     }
 
+    /// Searches a range for key/values
+    fn argrep_ex(
+        &mut self,
+        key: &str,
+        start: u64,
+        end: u64,
+        op: &str,
+        search_exp: &str,
+        limit: u64,
+    ) -> RedisResult<Vec<i64>> {
+        cmd("ARGREP")
+            .arg(key)
+            .arg(start)
+            .arg(end)
+            .arg(op)
+            .arg(search_exp)
+            .arg("LIMIT")
+            .arg(limit)
+            .query(self)
+    }
+
     /// Inserts an element into the array at the insert cursor
     fn arinsert(&mut self, key: &str, value: &str) -> RedisResult<u64> {
         cmd("ARINSERT").arg(key).arg(value).query(self)

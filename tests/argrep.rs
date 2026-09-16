@@ -96,6 +96,25 @@ fn exact_simple() {
 }
 
 #[test]
+fn limit() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "bar").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "bar").unwrap(); // match
+    con.arset("foo", 39, "quux").unwrap(); // no match
+    // Position 40 is left empty; no match
+    con.arset("foo", 41, "bar").unwrap(); // match. Reaches limit 2
+    con.arset("foo", 42, "bar").unwrap(); // no match (extra whitespace)
+    con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value, 1st and 3rd match an meet limit)
+    let res = con.argrep_ex("foo", 38, 42, "EXACT", "bar", 2).unwrap();
+    assert_eq!(res, vec![38, 41]);
+}
+
+#[test]
 fn reverse() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
