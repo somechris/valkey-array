@@ -86,6 +86,10 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Searches a range for key/values
+    #[allow(
+        clippy::too_many_arguments,
+        reason = "We don't want to fully model the options just to test the command"
+    )]
     fn argrep_ex(
         &mut self,
         key: &str,
@@ -93,17 +97,21 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         end: u64,
         op: &str,
         search_exp: &str,
-        limit: u64,
+        opt_limit: Option<u64>,
+        case_sensitive: bool,
     ) -> RedisResult<Vec<i64>> {
-        cmd("ARGREP")
-            .arg(key)
-            .arg(start)
-            .arg(end)
-            .arg(op)
-            .arg(search_exp)
-            .arg("LIMIT")
-            .arg(limit)
-            .query(self)
+        let mut command = cmd("ARGREP");
+        command.arg(key).arg(start).arg(end).arg(op).arg(search_exp);
+
+        if let Some(limit) = opt_limit {
+            command.arg("LIMIT").arg(limit);
+        }
+
+        if !case_sensitive {
+            command.arg("NOCASE");
+        }
+
+        command.query(self)
     }
 
     /// Inserts an element into the array at the insert cursor

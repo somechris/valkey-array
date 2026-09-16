@@ -73,7 +73,20 @@ fn faulty_calls() {
 }
 
 #[test]
-fn exact_simple() {
+fn empty_range() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "bar").unwrap(); // ignored (not in range)
+
+    // Getting used entries from 64-68 (no position in that range has a value)
+    let res = con.argrep("foo", 64, 68, "EXACT", "bar").unwrap();
+    assert_eq!(res, vec![]);
+}
+
+#[test]
+fn exact_case_sensitive() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
 
@@ -83,16 +96,33 @@ fn exact_simple() {
     con.arset("foo", 39, "quux").unwrap(); // no match
     // Position 40 is left empty; no match
     con.arset("foo", 41, "bar").unwrap(); // match
-    con.arset("foo", 42, "  bar  ").unwrap(); // no match (extra whitespace)
+    con.arset("foo", 42, "BAR").unwrap(); // no match (we're case-sensitive)
     con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
-
-    // Getting used entries from 64--68 (no position in that range has a value)
-    let res = con.argrep("foo", 64, 68, "EXACT", "bar").unwrap();
-    assert_eq!(res, vec![]);
 
     // Getting from 38-42 (4 positions have a value)
     let res = con.argrep("foo", 38, 42, "EXACT", "bar").unwrap();
     assert_eq!(res, vec![38, 41]);
+}
+
+#[test]
+fn exact_case_insensitive() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "bar").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "bar").unwrap(); // match
+    con.arset("foo", 39, "quux").unwrap(); // no match
+    // Position 40 is left empty; no match
+    con.arset("foo", 41, "bar").unwrap(); // match
+    con.arset("foo", 42, "BAR").unwrap(); // match (we're case-insensitive)
+    con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value)
+    let res = con
+        .argrep_ex("foo", 38, 42, "EXACT", "bar", None, false)
+        .unwrap();
+    assert_eq!(res, vec![38, 41, 42]);
 }
 
 #[test]
@@ -110,7 +140,9 @@ fn limit() {
     con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
 
     // Getting from 38-42 (4 positions have a value, 1st and 3rd match an meet limit)
-    let res = con.argrep_ex("foo", 38, 42, "EXACT", "bar", 2).unwrap();
+    let res = con
+        .argrep_ex("foo", 38, 42, "EXACT", "bar", Some(2), true)
+        .unwrap();
     assert_eq!(res, vec![38, 41]);
 }
 
