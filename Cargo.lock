@@ -33,6 +33,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03918c3dbd7701a85c6b9887732e2921175f26c350b4563841d0958c21d57e6d"
 
 [[package]]
+name = "arrayvec"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
+
+[[package]]
 name = "assertables"
 version = "10.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -203,6 +209,15 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys",
+]
+
+[[package]]
+name = "fast-glob"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d3f5d15b86ff37d2d23719f90657a53d5399abe0736dacb9e5fbe549314d349"
+dependencies = [
+ "arrayvec",
 ]
 
 [[package]]
@@ -932,6 +947,7 @@ name = "valkey-array"
 version = "0.0.1"
 dependencies = [
  "assertables",
+ "fast-glob",
  "redis",
  "redis-test",
  "valkey-module",

@@ -168,6 +168,48 @@ fn match_case_insensitive() {
 }
 
 #[test]
+fn glob_case_sensitive() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "foobar").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "foobar").unwrap(); // match
+    con.arset("foo", 39, "fooooobar").unwrap(); // match
+    // Position 40 is left empty; no match
+    con.arset("foo", 41, "foXbaz").unwrap(); // match
+    con.arset("foo", 42, "fOoBaR").unwrap(); // no match (we're case-sensitive)
+    con.arset("foo", 43, "barFOObaz").unwrap(); // no match (does not start in `f`)
+    con.arset("foo", 44, "foobar").unwrap(); // ignored (not in range)
+
+    // Getting from 38-43 (5 positions have a value)
+    let res = con.argrep("foo", 38, 43, "GLOB", "fo*b").unwrap();
+    assert_eq!(res, vec![38, 39, 41]);
+}
+
+#[test]
+fn glob_case_insensitive() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "foobar").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "foobar").unwrap(); // match
+    con.arset("foo", 39, "fooooobar").unwrap(); // match
+    // Position 40 is left empty; no match
+    con.arset("foo", 41, "foXbaz").unwrap(); // match
+    con.arset("foo", 42, "fOoBaR").unwrap(); // no match (we're case-sensitive)
+    con.arset("foo", 43, "barFOObaz").unwrap(); // no match (does not start in `f`)
+    con.arset("foo", 44, "foobar").unwrap(); // ignored (not in range)
+
+    // Getting from 38-43 (5 positions have a value)
+    let res: Vec<i64> = con
+        .argrep_ex("foo", 38, 43, "GLOB", "fo*b", None, false, false)
+        .unwrap();
+    assert_eq!(res, vec![38, 39, 41, 42]);
+}
+
+#[test]
 fn limit() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();

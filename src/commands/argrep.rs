@@ -12,6 +12,16 @@ pub enum Matcher {
 
     /// Matches iff the found item contains the given one (aka substring search)
     Contains(ValkeyString),
+
+    /// Matches iff the found item is matched by the given glob
+    ///
+    /// The glob is anchored at the beginning, but not at the end.
+    ///
+    /// To match Valkey's glob matching, the glob gets a `*` get appended if it's not there yet.
+    ///
+    /// For the same reason, case-insensitive matching only converts the found items' ASCII upper
+    /// case characters to lower case and matches the glob as given.
+    Glob(ValkeyString),
 }
 
 /// Converts the input's uppercase ASCII characters to lowercase
@@ -62,6 +72,20 @@ fn act_on_range(
                 }
             }
         }
+        Matcher::Glob(search_expr_raw) => {
+            // Valkey checks globs as if they end in a `*`. `fast_glob` does not.
+            // So we add a `*` it if necessary.
+            let mut search_expr = search_expr_raw.to_vec();
+            if !search_expr.ends_with("*".as_bytes()) {
+                search_expr.push(0x2a); // Appending '*'
+            }
+
+            if case_sensitive {
+                &move |candidate| fast_glob::glob_match(&search_expr, &**candidate)
+            } else {
+                &move |candidate| fast_glob::glob_match(&search_expr, ascii_lower_case(candidate))
+            }
+        }
     };
 
     let mut ret = vec![];
@@ -103,6 +127,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         .as_str()
     {
         "EXACT" => Matcher::Exact(arg_iter.next_arg()?),
+        "GLOB" => Matcher::Glob(arg_iter.next_arg()?),
         "MATCH" => Matcher::Contains(arg_iter.next_arg()?),
         _ => return Err(ValkeyError::Str("ERR Unknown ARGREP operation")),
     };
@@ -270,7 +295,7 @@ mod tests {
         // No position 2, no match
         array.set(&3, &vkstr("BARfooBAZ")); // match
         array.set(&4, &vkstr("fOo")); // no match (we're case-sensitive)
-        array.set(&5, &vkstr("barFOObaz"));  // no match (we're case-sensitive)
+        array.set(&5, &vkstr("barFOObaz")); // no match (we're case-sensitive)
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
         let result = act_on_range(
@@ -294,7 +319,7 @@ mod tests {
         // No position 2, no match
         array.set(&3, &vkstr("barBAZ")); // no match (missing foo)
         array.set(&4, &vkstr("fOo")); // match (we're case-sensitive)
-        array.set(&5, &vkstr("barFOObaz"));  // match (we're case-sensitive)
+        array.set(&5, &vkstr("barFOObaz")); // match (we're case-sensitive)
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
         let result = act_on_range(
@@ -307,6 +332,54 @@ mod tests {
             false,
         );
         let expected = u32s_to_vec_value(&[1, 4, 5]);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn act_on_range_glob_case_sensitive() {
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foobar")); // ignored (not in range)
+        array.set(&1, &vkstr("fooooobar")); // match
+        // No position 2, no match
+        array.set(&3, &vkstr("foXbaz")); // match
+        array.set(&4, &vkstr("fOoBaR")); // no match (we're case-sensitive)
+        array.set(&5, &vkstr("barFOObaz")); // no match (does not start in `f`)
+        array.set(&6, &vkstr("foobar")); // ignored (not in range)
+
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Glob(vkstr("fo*b")),
+            None,
+            true,
+            false,
+        );
+        let expected = u32s_to_vec_value(&[1, 3]);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn act_on_range_glob_case_insensitive() {
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foobar")); // ignored (not in range)
+        array.set(&1, &vkstr("fooooobar")); // match
+        // No position 2, no match
+        array.set(&3, &vkstr("foXbaz")); // match
+        array.set(&4, &vkstr("fOoBaR")); // no match (we're case-sensitive)
+        array.set(&5, &vkstr("barFOObaz")); // no match (does not start in `f`)
+        array.set(&6, &vkstr("foo")); // ignored (not in range)
+
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Glob(vkstr("fo*b")),
+            None,
+            false,
+            false,
+        );
+        let expected = u32s_to_vec_value(&[1, 3, 4]);
         assert_eq!(result, expected);
     }
 
