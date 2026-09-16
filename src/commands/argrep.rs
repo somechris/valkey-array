@@ -13,6 +13,7 @@ fn act_on_range(
     search_expr: &ValkeyString,
     opt_limit: Option<u64>,
     case_sensitive: bool,
+    with_values: bool,
 ) -> Vec<ValkeyValue> {
     if end < start {
         std::mem::swap(&mut end, &mut start);
@@ -23,18 +24,24 @@ fn act_on_range(
         None => (false, 0),
     };
 
-    let comp_fn: &dyn Fn(ValkeyString) -> bool = if case_sensitive {
-        &|candidate| candidate == *search_expr
+    let comp_fn: &dyn Fn(&ValkeyString) -> bool = if case_sensitive {
+        &|candidate| candidate == search_expr
     } else {
-        &|candidate: ValkeyString| candidate.eq_ignore_ascii_case(search_expr)
+        &|candidate| (*candidate).eq_ignore_ascii_case(search_expr)
     };
 
     let mut ret = vec![];
     for position in start..=end {
         if let Some(value) = array.get(&position)
-            && comp_fn(value)
+            && comp_fn(&value)
         {
-            ret.push((position as i64).into());
+            if with_values {
+                let vkpos = ValkeyValue::from(position as i64);
+                let vkvalue = ValkeyValue::from(value);
+                ret.push(ValkeyValue::from(vec![vkpos, vkvalue]));
+            } else {
+                ret.push((position as i64).into());
+            }
         }
 
         // Checking an eventual limit
@@ -53,6 +60,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let end = arg_iter.next_u64()?;
     let mut opt_limit = None;
     let mut case_sensitive = true;
+    let mut with_values = false;
 
     if arg_iter
         .next_arg()?
@@ -71,6 +79,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         match arg.to_string().to_ascii_uppercase().as_str() {
             "LIMIT" => opt_limit = Some(arg_iter.next_u64()?),
             "NOCASE" => case_sensitive = false,
+            "WITHVALUES" => with_values = true,
             _ => return Err(ValkeyError::WrongArity),
         }
     }
@@ -87,6 +96,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         search_expr,
         opt_limit,
         case_sensitive,
+        with_values,
     );
 
     Ok(ValkeyValue::Array(items))
@@ -97,7 +107,7 @@ mod tests {
     use crate::Array;
     use crate::commands::argrep;
     use crate::commands::argrep::act_on_range;
-    use crate::test_utils::{u32s_to_vec_value, vkstr};
+    use crate::test_utils::{u32s_to_vec_value, u32s_with_vals_to_vec_value, vkstr};
     use assertables::{assert_contains, assert_matches};
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
@@ -146,10 +156,39 @@ mod tests {
     }
 
     #[test]
+    fn arity_too_high_with_values() {
+        let ctx = Context::test();
+        let args = create_test_args(&[
+            "ARGREP",
+            "foo",
+            "23",
+            "42",
+            "EXACT",
+            "bar",
+            "WITHVALUES",
+            "baz",
+        ]);
+
+        let result = argrep(&ctx, args);
+
+        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+    }
+
+    #[test]
     fn arity_too_high_with_all_options() {
         let ctx = Context::test();
         let args = create_test_args(&[
-            "ARGREP", "foo", "23", "42", "EXACT", "bar", "LIMIT", "4711", "NOCASE", "baz",
+            "ARGREP",
+            "foo",
+            "23",
+            "42",
+            "EXACT",
+            "bar",
+            "LIMIT",
+            "4711",
+            "NOCASE",
+            "WITHVALUES",
+            "baz",
         ]);
 
         let result = argrep(&ctx, args);
@@ -201,7 +240,7 @@ mod tests {
         array.set(&5, &vkstr("foo")); // match
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
-        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), None, true);
+        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), None, true, false);
         let expected = u32s_to_vec_value(&[1, 3, 5]);
         assert_eq!(result, expected);
     }
@@ -217,8 +256,25 @@ mod tests {
         array.set(&5, &vkstr("FOO")); // match (we're case-insensitive)
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
-        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), None, false);
+        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), None, false, false);
         let expected = u32s_to_vec_value(&[1, 3, 4, 5]);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn act_on_range_exact_case_insensitive_with_values() {
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foo")); // ignored (not in range)
+        array.set(&1, &vkstr("foo")); // match
+        // No position 2, no match
+        array.set(&3, &vkstr("foo")); // match
+        array.set(&4, &vkstr("fOo")); // match (we're case-insensitive)
+        array.set(&5, &vkstr("FOO")); // match (we're case-insensitive)
+        array.set(&6, &vkstr("foo")); // ignored (not in range)
+
+        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), None, false, true);
+        let expected =
+            u32s_with_vals_to_vec_value(&[(1, "foo"), (3, "foo"), (4, "fOo"), (5, "FOO")]);
         assert_eq!(result, expected);
     }
 
@@ -233,7 +289,7 @@ mod tests {
         array.set(&5, &vkstr("foo")); // match
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
-        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), Some(2), true);
+        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), Some(2), true, false);
         let expected = u32s_to_vec_value(&[1, 3]);
         assert_eq!(result, expected);
     }

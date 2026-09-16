@@ -90,7 +90,7 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         clippy::too_many_arguments,
         reason = "We don't want to fully model the options just to test the command"
     )]
-    fn argrep_ex(
+    fn argrep_ex<T: FromRedisValue>(
         &mut self,
         key: &str,
         start: u64,
@@ -99,7 +99,8 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         search_exp: &str,
         opt_limit: Option<u64>,
         case_sensitive: bool,
-    ) -> RedisResult<Vec<i64>> {
+        with_values: bool,
+    ) -> RedisResult<T> {
         let mut command = cmd("ARGREP");
         command.arg(key).arg(start).arg(end).arg(op).arg(search_exp);
 
@@ -109,6 +110,10 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
 
         if !case_sensitive {
             command.arg("NOCASE");
+        }
+
+        if with_values {
+            command.arg("WITHVALUES");
         }
 
         command.query(self)

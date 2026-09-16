@@ -119,8 +119,8 @@ fn exact_case_insensitive() {
     con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
 
     // Getting from 38-42 (4 positions have a value)
-    let res = con
-        .argrep_ex("foo", 38, 42, "EXACT", "bar", None, false)
+    let res: Vec<i64> = con
+        .argrep_ex("foo", 38, 42, "EXACT", "bar", None, false, false)
         .unwrap();
     assert_eq!(res, vec![38, 41, 42]);
 }
@@ -140,10 +140,65 @@ fn limit() {
     con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
 
     // Getting from 38-42 (4 positions have a value, 1st and 3rd match an meet limit)
-    let res = con
-        .argrep_ex("foo", 38, 42, "EXACT", "bar", Some(2), true)
+    let res: Vec<i64> = con
+        .argrep_ex("foo", 38, 42, "EXACT", "bar", Some(2), true, false)
         .unwrap();
     assert_eq!(res, vec![38, 41]);
+}
+
+#[test]
+fn with_values() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "bar").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "bar").unwrap(); // match
+    con.arset("foo", 39, "quux").unwrap(); // no match
+    // Position 40 is left empty; no match
+    con.arset("foo", 41, "bAr").unwrap(); // match (we're case-insensitive)
+    con.arset("foo", 42, "BAR").unwrap(); // match (we're case-insensitive)
+    con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value, 1st and 3rd match an meet limit)
+    let res: Vec<(i64, String)> = con
+        .argrep_ex("foo", 38, 42, "EXACT", "bar", None, false, true)
+        .unwrap();
+    assert_eq!(
+        res,
+        vec![
+            (38, "bar".to_string()),
+            (41, "bAr".to_string()),
+            (42, "BAR".to_string())
+        ]
+    );
+}
+
+#[test]
+fn all_options() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "bar").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "bAr").unwrap(); // match (we're case-insensitive)
+    con.arset("foo", 39, "quux").unwrap(); // no match
+    // Position 40 is left empty; no match
+    con.arset("foo", 41, "BAR").unwrap(); // match (we're case-insensitive)
+    con.arset("foo", 42, "bar").unwrap(); // ignored (we're past the limit 2)
+    con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value, 1st and 3rd match an meet limit)
+    let res: Vec<(i64, String)> = con
+        .argrep_ex("foo", 38, 42, "EXACT", "bar", Some(2), false, true)
+        .unwrap();
+    assert_eq!(
+        res,
+        vec![
+            (38, "bAr".to_string()),
+            (41, "BAR".to_string()),
+        ]
+    );
 }
 
 #[test]
