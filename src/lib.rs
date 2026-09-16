@@ -7,6 +7,7 @@
 //! * [`ARDELRANGE`](commands::ardelrange()) - deletes a range of values from an array
 //! * [`ARGET`](commands::arget()) - gets values from an array
 //! * [`ARGETRANGE`](commands::argetrange()) - gets a range of values from an array
+//! * [`ARGREP`](commands::argrep()) - searches for key/values in a range
 //! * [`ARINFO`](commands::arinfo()) - gives information about the array
 //! * [`ARINSERT`](commands::arinsert()) - inserts elements into the array
 //! * [`ARLEN`](commands::arlen()) - gets an array's highest used position + 1

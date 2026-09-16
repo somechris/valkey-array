@@ -25,6 +25,7 @@ fn basic() {
         "ardelrange".to_string(),
         "arget".to_string(),
         "argetrange".to_string(),
+        "argrep".to_string(),
         "arinfo".to_string(),
         "arinsert".to_string(),
         "arlen".to_string(),

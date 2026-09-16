@@ -9,6 +9,7 @@ valkey-array is a [Valkey](https://valkey.io/) module implementing array command
 * `ARDELRANGE` - deletes a range of values from an array
 * `ARGET` - gets values from an array
 * `ARGETRANGE` - gets a range of values from an array
+* `ARGREP` - searches for key/values in a range
 * `ARINFO` - gives information about the array
 * `ARINSERT` - inserts an element into the array
 * `ARLEN` - gets an array's highest used position + 1
