@@ -5,12 +5,26 @@ use crate::commands::utils::{err_if_further_arguments, read_write_action, to_arg
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
+/// Specification for a single match
+pub enum Matcher {
+    /// Matches iff the found item matches the given one exactly
+    Exact(ValkeyString),
+
+    /// Matches iff the found item contains the given one (aka substring search)
+    Contains(ValkeyString),
+}
+
+/// Converts the input's uppercase ASCII characters to lowercase
+pub fn ascii_lower_case(input: &[u8]) -> Vec<u8> {
+    input.iter().map(u8::to_ascii_lowercase).collect()
+}
+
 /// Executes the command on each position in the range (inclusive)
 fn act_on_range(
     array: &mut Array,
     mut start: u64,
     mut end: u64,
-    search_expr: &ValkeyString,
+    matcher: Matcher,
     opt_limit: Option<u64>,
     case_sensitive: bool,
     with_values: bool,
@@ -24,10 +38,30 @@ fn act_on_range(
         None => (false, 0),
     };
 
-    let comp_fn: &dyn Fn(&ValkeyString) -> bool = if case_sensitive {
-        &|candidate| candidate == search_expr
-    } else {
-        &|candidate| (*candidate).eq_ignore_ascii_case(search_expr)
+    let comp_fn: &dyn Fn(&ValkeyString) -> bool = match matcher {
+        Matcher::Exact(search_expr) => {
+            if case_sensitive {
+                &move |candidate| candidate == &search_expr
+            } else {
+                &move |candidate| (*candidate).eq_ignore_ascii_case(&search_expr)
+            }
+        }
+        Matcher::Contains(search_expr) => {
+            if case_sensitive {
+                &move |candidate| {
+                    candidate
+                        .windows(search_expr.len())
+                        .any(|left| left == &*search_expr)
+                }
+            } else {
+                let search_expr_lc = ascii_lower_case(&search_expr);
+                &move |candidate| {
+                    ascii_lower_case(candidate)
+                        .windows(search_expr.len())
+                        .any(|left| left == search_expr_lc)
+                }
+            }
+        }
     };
 
     let mut ret = vec![];
@@ -62,17 +96,16 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut case_sensitive = true;
     let mut with_values = false;
 
-    if arg_iter
+    let matcher = match arg_iter
         .next_arg()?
         .to_string()
         .to_ascii_uppercase()
         .as_str()
-        != "EXACT"
     {
-        return Err(ValkeyError::Str("ERR Unknown ARGREP operation"));
-    }
-
-    let search_expr = &arg_iter.next_arg()?;
+        "EXACT" => Matcher::Exact(arg_iter.next_arg()?),
+        "MATCH" => Matcher::Contains(arg_iter.next_arg()?),
+        _ => return Err(ValkeyError::Str("ERR Unknown ARGREP operation")),
+    };
 
     // Parse optional limit
     while let Some(arg) = arg_iter.next() {
@@ -93,7 +126,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         act_on_range,
         start,
         end,
-        search_expr,
+        matcher,
         opt_limit,
         case_sensitive,
         with_values,
@@ -106,7 +139,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 mod tests {
     use crate::Array;
     use crate::commands::argrep;
-    use crate::commands::argrep::act_on_range;
+    use crate::commands::argrep::{Matcher, act_on_range};
     use crate::test_utils::{u32s_to_vec_value, u32s_with_vals_to_vec_value, vkstr};
     use assertables::{assert_contains, assert_matches};
     use valkey_module::test_shims::create_test_args;
@@ -230,6 +263,54 @@ mod tests {
     }
 
     #[test]
+    fn act_on_range_contains_case_sensitive() {
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foo")); // ignored (not in range)
+        array.set(&1, &vkstr("foo")); // match
+        // No position 2, no match
+        array.set(&3, &vkstr("BARfooBAZ")); // match
+        array.set(&4, &vkstr("fOo")); // no match (we're case-sensitive)
+        array.set(&5, &vkstr("barFOObaz"));  // no match (we're case-sensitive)
+        array.set(&6, &vkstr("foo")); // ignored (not in range)
+
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Contains(vkstr("foo")),
+            None,
+            true,
+            false,
+        );
+        let expected = u32s_to_vec_value(&[1, 3]);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn act_on_range_contains_case_insensitive() {
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foo")); // ignored (not in range)
+        array.set(&1, &vkstr("foo")); // match
+        // No position 2, no match
+        array.set(&3, &vkstr("barBAZ")); // no match (missing foo)
+        array.set(&4, &vkstr("fOo")); // match (we're case-sensitive)
+        array.set(&5, &vkstr("barFOObaz"));  // match (we're case-sensitive)
+        array.set(&6, &vkstr("foo")); // ignored (not in range)
+
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Contains(vkstr("foo")),
+            None,
+            false,
+            false,
+        );
+        let expected = u32s_to_vec_value(&[1, 4, 5]);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
     fn act_on_range_exact_case_sensitive() {
         let mut array = Array::new();
         array.set(&0, &vkstr("foo")); // ignored (not in range)
@@ -240,7 +321,15 @@ mod tests {
         array.set(&5, &vkstr("foo")); // match
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
-        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), None, true, false);
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Exact(vkstr("foo")),
+            None,
+            true,
+            false,
+        );
         let expected = u32s_to_vec_value(&[1, 3, 5]);
         assert_eq!(result, expected);
     }
@@ -256,7 +345,15 @@ mod tests {
         array.set(&5, &vkstr("FOO")); // match (we're case-insensitive)
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
-        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), None, false, false);
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Exact(vkstr("foo")),
+            None,
+            false,
+            false,
+        );
         let expected = u32s_to_vec_value(&[1, 3, 4, 5]);
         assert_eq!(result, expected);
     }
@@ -272,7 +369,15 @@ mod tests {
         array.set(&5, &vkstr("FOO")); // match (we're case-insensitive)
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
-        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), None, false, true);
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Exact(vkstr("foo")),
+            None,
+            false,
+            true,
+        );
         let expected =
             u32s_with_vals_to_vec_value(&[(1, "foo"), (3, "foo"), (4, "fOo"), (5, "FOO")]);
         assert_eq!(result, expected);
@@ -289,7 +394,15 @@ mod tests {
         array.set(&5, &vkstr("foo")); // match
         array.set(&6, &vkstr("foo")); // ignored (not in range)
 
-        let result = act_on_range(&mut array, 1, 5, &vkstr("foo"), Some(2), true, false);
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Exact(vkstr("foo")),
+            Some(2),
+            true,
+            false,
+        );
         let expected = u32s_to_vec_value(&[1, 3]);
         assert_eq!(result, expected);
     }

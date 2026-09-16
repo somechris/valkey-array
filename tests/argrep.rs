@@ -1,5 +1,7 @@
 //! Integration test for the `AROP` command
 
+extern crate core;
+
 pub mod utils;
 
 use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
@@ -126,6 +128,46 @@ fn exact_case_insensitive() {
 }
 
 #[test]
+fn match_case_sensitive() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "bar").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "bar").unwrap(); // match
+    con.arset("foo", 39, "quux").unwrap(); // no match
+    // Position 40 is left empty; no match
+    con.arset("foo", 41, "foobarbaz").unwrap(); // match
+    con.arset("foo", 42, "fooBARbaz").unwrap(); // no match (we're case-sensitive)
+    con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value)
+    let res = con.argrep("foo", 38, 42, "MATCH", "bar").unwrap();
+    assert_eq!(res, vec![38, 41]);
+}
+
+#[test]
+fn match_case_insensitive() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 37, "bar").unwrap(); // ignored (not in range)
+    con.arset("foo", 38, "bar").unwrap(); // match
+    con.arset("foo", 39, "quux").unwrap(); // no match
+    // Position 40 is left empty; no match
+    con.arset("foo", 41, "foobarbaz").unwrap(); // match
+    con.arset("foo", 42, "fooBARbaz").unwrap(); // no match (we're case-sensitive)
+    con.arset("foo", 43, "bar").unwrap(); // ignored (not in range)
+
+    // Getting from 38-42 (4 positions have a value)
+    let res: Vec<i64> = con
+        .argrep_ex("foo", 38, 42, "MATCH", "bar", None, false, false)
+        .unwrap();
+    assert_eq!(res, vec![38, 41, 42]);
+}
+
+#[test]
 fn limit() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
@@ -192,13 +234,7 @@ fn all_options() {
     let res: Vec<(i64, String)> = con
         .argrep_ex("foo", 38, 42, "EXACT", "bar", Some(2), false, true)
         .unwrap();
-    assert_eq!(
-        res,
-        vec![
-            (38, "bAr".to_string()),
-            (41, "BAR".to_string()),
-        ]
-    );
+    assert_eq!(res, vec![(38, "bAr".to_string()), (41, "BAR".to_string()),]);
 }
 
 #[test]
