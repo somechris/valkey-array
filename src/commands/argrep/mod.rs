@@ -74,16 +74,15 @@ fn act_on_range(
         None => (false, 0),
     };
 
-    let Some(matcher) = matchers.into_iter().next() else {
-        return Err(ValkeyError::Str("ERR List of matchers for ARGREP is empty"));
-    };
-
-    let comp_fn = matcher.get_matcher(case_sensitive)?;
+    let matcher_fns = matchers
+        .into_iter()
+        .map(|substitute| substitute.get_matcher(case_sensitive))
+        .collect::<ValkeyResult<Vec<MatchingFn>>>()?;
 
     let mut items = vec![];
     for position in start..=end {
         if let Some(value) = array.get(&position)
-            && comp_fn(&value)
+            && matcher_fns.iter().any(|matcher_fn| matcher_fn(&value))
         {
             if with_values {
                 let vkpos = ValkeyValue::from(position as i64);
@@ -142,12 +141,6 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     if matchers.is_empty() {
         return Err(ValkeyError::WrongArity);
-    }
-
-    if matchers.len() >= 2 {
-        return Err(ValkeyError::Str(
-            "ERR Too many matchers in ARGREP operation",
-        ));
     }
 
     let items = read_write_action!(
@@ -381,5 +374,24 @@ mod tests {
 
         // And finally, the check
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn act_on_range_multiple_matchers_disjunctive() {
+        // Building the array to match against
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foobar"));
+        array.set(&1, &vkstr("foo"));
+        array.set(&2, &vkstr("bar"));
+        array.set(&3, &vkstr("baz"));
+        array.set(&4, &vkstr("quux"));
+        let matcher = vec![
+            SubstituteMatcher::Contains(vkstr("foo")),
+            SubstituteMatcher::Exact(vkstr("bar")),
+            SubstituteMatcher::Exact(vkstr("quux")),
+        ];
+        let result = act_on_range(&mut array, 0, 4, matcher, None, true, false).unwrap();
+
+        assert_eq!(result, u32s_to_vec_value(&[0, 1, 2, 4]))
     }
 }

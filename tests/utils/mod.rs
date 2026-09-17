@@ -95,14 +95,13 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         key: &str,
         start: u64,
         end: u64,
-        op: &str,
-        search_exp: &str,
+        ops: &[(&str, &str)],
         opt_limit: Option<u64>,
         case_sensitive: bool,
         with_values: bool,
     ) -> RedisResult<T> {
         let mut command = cmd("ARGREP");
-        command.arg(key).arg(start).arg(end).arg(op).arg(search_exp);
+        command.arg(key).arg(start).arg(end).arg(ops);
 
         if let Some(limit) = opt_limit {
             command.arg("LIMIT").arg(limit);
