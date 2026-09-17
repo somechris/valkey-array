@@ -950,6 +950,7 @@ dependencies = [
  "fast-glob",
  "redis",
  "redis-test",
+ "regex",
  "valkey-module",
 ]
 

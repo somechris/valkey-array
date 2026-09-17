@@ -3,6 +3,7 @@
 use crate::Array;
 use crate::commands::utils::{err_if_further_arguments, read_write_action, to_arg_iter};
 use crate::registration::VKARRAY;
+use regex::bytes::RegexBuilder;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Specification for a single match
@@ -22,6 +23,13 @@ pub enum Matcher {
     /// For the same reason, case-insensitive matching only converts the found items' ASCII upper
     /// case characters to lower case and matches the glob as given.
     Glob(ValkeyString),
+
+    /// Matches iff the found item is matched by the given regular expression
+    ///
+    /// The regular expressions are not anchored (neither at the start nor the end).
+    ///
+    /// To match Valkey's glob matching, the character classes are _not_ Unicode aware.
+    Regex(String),
 }
 
 /// Converts the input's uppercase ASCII characters to lowercase
@@ -38,7 +46,7 @@ fn act_on_range(
     opt_limit: Option<u64>,
     case_sensitive: bool,
     with_values: bool,
-) -> Vec<ValkeyValue> {
+) -> ValkeyResult<Vec<ValkeyValue>> {
     if end < start {
         std::mem::swap(&mut end, &mut start);
     }
@@ -86,9 +94,20 @@ fn act_on_range(
                 &move |candidate| fast_glob::glob_match(&search_expr, ascii_lower_case(candidate))
             }
         }
+        Matcher::Regex(search_expr) => {
+            let Ok(re) = RegexBuilder::new(&search_expr)
+                .case_insensitive(!case_sensitive)
+                .build()
+            else {
+                return Err(ValkeyError::Str(
+                    "ERR Regex for ARGREP is not a valid regular expression",
+                ));
+            };
+            &move |candidate| re.is_match(candidate)
+        }
     };
 
-    let mut ret = vec![];
+    let mut items = vec![];
     for position in start..=end {
         if let Some(value) = array.get(&position)
             && comp_fn(&value)
@@ -96,18 +115,18 @@ fn act_on_range(
             if with_values {
                 let vkpos = ValkeyValue::from(position as i64);
                 let vkvalue = ValkeyValue::from(value);
-                ret.push(ValkeyValue::from(vec![vkpos, vkvalue]));
+                items.push(ValkeyValue::from(vec![vkpos, vkvalue]));
             } else {
-                ret.push((position as i64).into());
+                items.push((position as i64).into());
             }
         }
 
         // Checking an eventual limit
-        if limited && ret.len() == limit {
+        if limited && items.len() == limit {
             break;
         }
     }
-    ret
+    Ok(items)
 }
 
 /// Implements the `ARGREP` command
@@ -129,6 +148,15 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         "EXACT" => Matcher::Exact(arg_iter.next_arg()?),
         "GLOB" => Matcher::Glob(arg_iter.next_arg()?),
         "MATCH" => Matcher::Contains(arg_iter.next_arg()?),
+        "RE" => {
+            let raw_arg = arg_iter.next_arg()?;
+            let Ok(re) = String::from_utf8(raw_arg.to_vec()) else {
+                return Err(ValkeyError::Str(
+                    "ERR Regex for ARGREP is not a valid UTF-8 string",
+                ));
+            };
+            Matcher::Regex(re)
+        }
         _ => return Err(ValkeyError::Str("ERR Unknown ARGREP operation")),
     };
 
@@ -155,7 +183,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         opt_limit,
         case_sensitive,
         with_values,
-    );
+    )?;
 
     Ok(ValkeyValue::Array(items))
 }
@@ -306,7 +334,8 @@ mod tests {
             None,
             true,
             false,
-        );
+        )
+        .unwrap();
         let expected = u32s_to_vec_value(&[1, 3]);
         assert_eq!(result, expected);
     }
@@ -330,7 +359,8 @@ mod tests {
             None,
             false,
             false,
-        );
+        )
+        .unwrap();
         let expected = u32s_to_vec_value(&[1, 4, 5]);
         assert_eq!(result, expected);
     }
@@ -354,7 +384,8 @@ mod tests {
             None,
             true,
             false,
-        );
+        )
+        .unwrap();
         let expected = u32s_to_vec_value(&[1, 3]);
         assert_eq!(result, expected);
     }
@@ -378,7 +409,58 @@ mod tests {
             None,
             false,
             false,
-        );
+        )
+        .unwrap();
+        let expected = u32s_to_vec_value(&[1, 3, 4]);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn act_on_range_re_case_sensitive() {
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foobarbaz")); // ignored (not in range)
+        array.set(&1, &vkstr("foobarbaz")); // match
+        // No position 2, no match
+        array.set(&3, &vkstr("baZ")); // match
+        array.set(&4, &vkstr("fooBarbAz")); // no match (we're case-sensitive)
+        array.set(&5, &vkstr("ar")); // no match (does not contain `b`)
+        array.set(&6, &vkstr("foobar")); // ignored (not in range)
+
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Regex("ba.".to_string()),
+            None,
+            true,
+            false,
+        )
+        .unwrap();
+        let expected = u32s_to_vec_value(&[1, 3]);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn act_on_range_re_case_insensitive() {
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foobarbaz")); // ignored (not in range)
+        array.set(&1, &vkstr("foobarbaz")); // match
+        // No position 2, no match
+        array.set(&3, &vkstr("baZ")); // match
+        array.set(&4, &vkstr("fooBarbAz")); // match (we're case-insensitive)
+        array.set(&5, &vkstr("ar")); // no match (does not contain `b`)
+        array.set(&6, &vkstr("foobar")); // ignored (not in range)
+
+        let result = act_on_range(
+            &mut array,
+            1,
+            5,
+            Matcher::Regex("ba.".to_string()),
+            None,
+            false,
+            false,
+        )
+        .unwrap();
         let expected = u32s_to_vec_value(&[1, 3, 4]);
         assert_eq!(result, expected);
     }
@@ -402,7 +484,8 @@ mod tests {
             None,
             true,
             false,
-        );
+        )
+        .unwrap();
         let expected = u32s_to_vec_value(&[1, 3, 5]);
         assert_eq!(result, expected);
     }
@@ -426,7 +509,8 @@ mod tests {
             None,
             false,
             false,
-        );
+        )
+        .unwrap();
         let expected = u32s_to_vec_value(&[1, 3, 4, 5]);
         assert_eq!(result, expected);
     }
@@ -450,7 +534,8 @@ mod tests {
             None,
             false,
             true,
-        );
+        )
+        .unwrap();
         let expected =
             u32s_with_vals_to_vec_value(&[(1, "foo"), (3, "foo"), (4, "fOo"), (5, "FOO")]);
         assert_eq!(result, expected);
@@ -475,7 +560,8 @@ mod tests {
             Some(2),
             true,
             false,
-        );
+        )
+        .unwrap();
         let expected = u32s_to_vec_value(&[1, 3]);
         assert_eq!(result, expected);
     }

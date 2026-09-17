@@ -15,6 +15,7 @@ min-valkey-compatibility-version-8-0 = ["valkey-module/min-valkey-compatibility-
 
 [dependencies]
 fast-glob = "1.1.1"
+regex = "1.13.1"
 valkey-module = "0.1.14"
 
 [dev-dependencies]
