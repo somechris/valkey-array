@@ -96,23 +96,13 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         start: u64,
         end: u64,
         ops: &[(&str, &str)],
-        opt_limit: Option<u64>,
-        case_sensitive: bool,
-        with_values: bool,
+        extra_args: &[&str],
     ) -> RedisResult<T> {
         let mut command = cmd("ARGREP");
         command.arg(key).arg(start).arg(end).arg(ops);
 
-        if let Some(limit) = opt_limit {
-            command.arg("LIMIT").arg(limit);
-        }
-
-        if !case_sensitive {
-            command.arg("NOCASE");
-        }
-
-        if with_values {
-            command.arg("WITHVALUES");
+        for extra_arg in extra_args {
+            command.arg(extra_arg);
         }
 
         command.query(self)

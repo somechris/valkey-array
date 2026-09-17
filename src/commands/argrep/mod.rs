@@ -56,6 +56,10 @@ impl SubstituteMatcher {
 }
 
 /// Executes the command on each position in the range (inclusive)
+#[allow(
+    clippy::too_many_arguments,
+    reason = "We're lax, and this is for internal use only"
+)]
 fn act_on_range(
     array: &mut Array,
     mut start: u64,
@@ -64,6 +68,7 @@ fn act_on_range(
     opt_limit: Option<u64>,
     case_sensitive: bool,
     with_values: bool,
+    conjunctive: bool,
 ) -> ValkeyResult<Vec<ValkeyValue>> {
     if end < start {
         std::mem::swap(&mut end, &mut start);
@@ -82,7 +87,8 @@ fn act_on_range(
     let mut items = vec![];
     for position in start..=end {
         if let Some(value) = array.get(&position)
-            && matcher_fns.iter().any(|matcher_fn| matcher_fn(&value))
+            && ((conjunctive && matcher_fns.iter().all(|matcher_fn| matcher_fn(&value)))
+                || (!conjunctive && matcher_fns.iter().any(|matcher_fn| matcher_fn(&value))))
         {
             if with_values {
                 let vkpos = ValkeyValue::from(position as i64);
@@ -111,6 +117,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut case_sensitive = true;
     let mut with_values = false;
     let mut matchers = vec![];
+    let mut conjunctive = false;
 
     // Parse options
     while let Some(arg) = arg_iter.next() {
@@ -130,8 +137,10 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
             }
 
             // -- Options -------------------
+            "AND" => conjunctive = true,
             "LIMIT" => opt_limit = Some(arg_iter.next_u64()?),
             "NOCASE" => case_sensitive = false,
+            "OR" => conjunctive = false,
             "WITHVALUES" => with_values = true,
             _ => return Err(ValkeyError::WrongArity),
         }
@@ -154,6 +163,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         opt_limit,
         case_sensitive,
         with_values,
+        conjunctive,
     )?;
 
     Ok(ValkeyValue::Array(items))
@@ -349,6 +359,7 @@ mod tests {
             limited_param,
             case_sensitivity_param,
             with_values,
+            false,
         )
         .unwrap();
 
@@ -390,8 +401,31 @@ mod tests {
             SubstituteMatcher::Exact(vkstr("bar")),
             SubstituteMatcher::Exact(vkstr("quux")),
         ];
-        let result = act_on_range(&mut array, 0, 4, matcher, None, true, false).unwrap();
+        let result = act_on_range(&mut array, 0, 4, matcher, None, true, false, false).unwrap();
 
         assert_eq!(result, u32s_to_vec_value(&[0, 1, 2, 4]))
+    }
+
+    #[test]
+    fn act_on_range_multiple_matchers_conjunctive() {
+        // Building the array to match against
+        let mut array = Array::new();
+        array.set(&0, &vkstr("foobar"));
+        array.set(&1, &vkstr("barfoo"));
+        array.set(&2, &vkstr("foobaz"));
+        array.set(&3, &vkstr("bazquuxfoo"));
+        array.set(&4, &vkstr("bafooz"));
+        array.set(&5, &vkstr("foo"));
+        array.set(&6, &vkstr("bar"));
+        array.set(&7, &vkstr("baz"));
+        array.set(&8, &vkstr("quux"));
+        let matcher = vec![
+            SubstituteMatcher::Contains(vkstr("foo")),
+            SubstituteMatcher::Contains(vkstr("ba")),
+            SubstituteMatcher::Contains(vkstr("z")),
+        ];
+        let result = act_on_range(&mut array, 0, 8, matcher, None, true, false, true).unwrap();
+
+        assert_eq!(result, u32s_to_vec_value(&[2, 3, 4]))
     }
 }

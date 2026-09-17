@@ -122,7 +122,7 @@ fn exact_case_insensitive() {
 
     // Getting from 38-42 (4 positions have a value)
     let res: Vec<i64> = con
-        .argrep_ex("foo", 38, 42, &[("EXACT", "bar")], None, false, false)
+        .argrep_ex("foo", 38, 42, &[("EXACT", "bar")], &["NOCASE"])
         .unwrap();
     assert_eq!(res, vec![38, 41, 42]);
 }
@@ -162,7 +162,7 @@ fn match_case_insensitive() {
 
     // Getting from 38-42 (4 positions have a value)
     let res: Vec<i64> = con
-        .argrep_ex("foo", 38, 42, &[("MATCH", "bar")], None, false, false)
+        .argrep_ex("foo", 38, 42, &[("MATCH", "bar")], &["NOCASE"])
         .unwrap();
     assert_eq!(res, vec![38, 41, 42]);
 }
@@ -204,7 +204,7 @@ fn glob_case_insensitive() {
 
     // Getting from 38-43 (5 positions have a value)
     let res: Vec<i64> = con
-        .argrep_ex("foo", 38, 43, &[("GLOB", "fo*b")], None, false, false)
+        .argrep_ex("foo", 38, 43, &[("GLOB", "fo*b")], &["NOCASE"])
         .unwrap();
     assert_eq!(res, vec![38, 39, 41, 42]);
 }
@@ -246,7 +246,7 @@ fn re_case_insensitive() {
 
     // Getting from 38-43
     let res: Vec<i64> = con
-        .argrep_ex("foo", 38, 43, &[("RE", "ba.")], None, false, false)
+        .argrep_ex("foo", 38, 43, &[("RE", "ba.")], &["NOCASE"])
         .unwrap();
     assert_eq!(res, vec![38, 39, 41, 43]);
 }
@@ -263,10 +263,40 @@ fn multiple_matcher_default() {
     con.arset("foo", 41, "baz").unwrap(); // match (equal to "baz")
 
     let matchers = &[("MATCH", "foo"), ("EXACT", "baz")];
-    let res: Vec<i64> = con
-        .argrep_ex("foo", 38, 41, matchers, None, false, false)
-        .unwrap();
+    let res: Vec<i64> = con.argrep_ex("foo", 38, 41, matchers, &[]).unwrap();
     assert_eq!(res, vec![38, 39, 41]);
+}
+
+#[test]
+fn multiple_matcher_disjunctive() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 38, "foobar").unwrap(); // match (contains "foo")
+    con.arset("foo", 39, "foo").unwrap(); // match (contains "foo")
+    con.arset("foo", 40, "bar").unwrap(); // no match
+    con.arset("foo", 41, "baz").unwrap(); // match (equal to "baz")
+
+    let matchers = &[("MATCH", "foo"), ("EXACT", "baz")];
+    let res: Vec<i64> = con.argrep_ex("foo", 38, 41, matchers, &["OR"]).unwrap();
+    assert_eq!(res, vec![38, 39, 41]);
+}
+
+#[test]
+fn multiple_matcher_conjunctive() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a few elements
+    con.arset("foo", 38, "foo").unwrap(); // no match (contains only "foo")
+    con.arset("foo", 39, "bar").unwrap(); // no match (contains only "bar")
+    con.arset("foo", 40, "foobar").unwrap(); // match (contains both "foo" and "bar")
+    con.arset("foo", 41, "baz").unwrap(); // no match
+
+    let matchers = &[("MATCH", "foo"), ("MATCH", "bar")];
+    let res: Vec<i64> = con.argrep_ex("foo", 38, 41, matchers, &["AND"]).unwrap();
+    assert_eq!(res, vec![40]);
 }
 
 #[test]
@@ -285,7 +315,7 @@ fn limit() {
 
     // Getting from 38-42 (4 positions have a value, 1st and 3rd match an meet limit)
     let res: Vec<i64> = con
-        .argrep_ex("foo", 38, 42, &[("EXACT", "bar")], Some(2), true, false)
+        .argrep_ex("foo", 38, 42, &[("EXACT", "bar")], &["LIMIT", "2"])
         .unwrap();
     assert_eq!(res, vec![38, 41]);
 }
@@ -306,7 +336,13 @@ fn with_values() {
 
     // Getting from 38-42 (4 positions have a value, 1st and 3rd match an meet limit)
     let res: Vec<(i64, String)> = con
-        .argrep_ex("foo", 38, 42, &[("EXACT", "bar")], None, false, true)
+        .argrep_ex(
+            "foo",
+            38,
+            42,
+            &[("EXACT", "bar")],
+            &["WITHVALUES", "NOCASE"],
+        )
         .unwrap();
     assert_eq!(
         res,
@@ -334,7 +370,13 @@ fn all_options() {
 
     // Getting from 38-42 (4 positions have a value, 1st and 3rd match an meet limit)
     let res: Vec<(i64, String)> = con
-        .argrep_ex("foo", 38, 42, &[("EXACT", "bar")], Some(2), false, true)
+        .argrep_ex(
+            "foo",
+            38,
+            42,
+            &[("EXACT", "bar")],
+            &["LIMIT", "2", "NOCASE", "WITHVALUES", "OR"],
+        )
         .unwrap();
     assert_eq!(res, vec![(38, "bAr".to_string()), (41, "BAR".to_string()),]);
 }
