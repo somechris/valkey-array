@@ -3,6 +3,7 @@
 mod ops;
 
 use crate::Array;
+use crate::array::Range;
 use crate::commands::arop::ops::Operation;
 use crate::commands::utils::{
     NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
@@ -33,14 +34,9 @@ pub enum SubstituteOperation {
 }
 
 /// Executes the command on each position in the range (inclusive)
-fn act_on_range_typed<OP: Operation>(
-    array: &mut Array,
-    start: u64,
-    end: u64,
-    mut op: OP,
-) -> ValkeyResult {
-    for position in start..=end {
-        if let Some(value) = array.get(&position) {
+fn act_on_range_typed<OP: Operation>(array: &mut Array, range: Range, mut op: OP) -> ValkeyResult {
+    for (_position, maybe_value) in array.range_iter(range) {
+        if let Some(value) = maybe_value {
             op.accumulate(value);
         }
     }
@@ -48,24 +44,19 @@ fn act_on_range_typed<OP: Operation>(
     Ok(op.build_result())
 }
 
-fn act_on_range(
-    array: &mut Array,
-    start: u64,
-    end: u64,
-    op_subst: SubstituteOperation,
-) -> ValkeyResult {
+fn act_on_range(array: &mut Array, range: Range, op_subst: SubstituteOperation) -> ValkeyResult {
     use SubstituteOperation::*;
     match op_subst {
-        And => act_on_range_typed(array, start, end, ops::AndOperation::new()),
-        Max => act_on_range_typed(array, start, end, ops::MaxOperation::new()),
+        And => act_on_range_typed(array, range, ops::AndOperation::new()),
+        Max => act_on_range_typed(array, range, ops::MaxOperation::new()),
         Match(search_expr) => {
-            act_on_range_typed(array, start, end, ops::MatchOperation::new(search_expr))
+            act_on_range_typed(array, range, ops::MatchOperation::new(search_expr))
         }
-        Min => act_on_range_typed(array, start, end, ops::MinOperation::new()),
-        Or => act_on_range_typed(array, start, end, ops::OrOperation::new()),
-        Sum => act_on_range_typed(array, start, end, ops::SumOperation::new()),
-        Used => act_on_range_typed(array, start, end, ops::UsedOperation::new()),
-        Xor => act_on_range_typed(array, start, end, ops::XorOperation::new()),
+        Min => act_on_range_typed(array, range, ops::MinOperation::new()),
+        Or => act_on_range_typed(array, range, ops::OrOperation::new()),
+        Sum => act_on_range_typed(array, range, ops::SumOperation::new()),
+        Used => act_on_range_typed(array, range, ops::UsedOperation::new()),
+        Xor => act_on_range_typed(array, range, ops::XorOperation::new()),
     }
 }
 
@@ -73,7 +64,7 @@ fn act_on_range(
 pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let (start, end) = arg_iter.next_start_end()?;
+    let range = arg_iter.next_start_end()?;
 
     // Parse operation
     let op_subst = match arg_iter
@@ -103,8 +94,7 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         key_name,
         ValkeyValue::Array(Vec::new()),
         act_on_range,
-        start,
-        end,
+        range,
         op_subst
     )
 }

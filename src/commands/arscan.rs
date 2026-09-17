@@ -1,6 +1,7 @@
 //! Implementation of the `ARSCAN` command
 
 use crate::Array;
+use crate::array::Range;
 use crate::commands::utils::{
     NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
 };
@@ -8,20 +9,15 @@ use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Executes the command on each position in the range (inclusive)
-fn act_on_range(
-    array: &mut Array,
-    start: u64,
-    end: u64,
-    opt_limit: Option<u64>,
-) -> Vec<ValkeyValue> {
+fn act_on_range(array: &mut Array, range: Range, opt_limit: Option<u64>) -> Vec<ValkeyValue> {
     let (limited, limit) = match opt_limit {
         Some(limit) => (true, limit as usize),
         None => (false, 0),
     };
 
     let mut ret = vec![];
-    for position in start..=end {
-        if let Some(value) = array.get(&position) {
+    for (position, maybe_value) in array.range_iter(range) {
+        if let Some(value) = maybe_value {
             ret.push((vec![ValkeyValue::from(position as i64), value.into()]).into());
         }
 
@@ -37,7 +33,7 @@ fn act_on_range(
 pub fn arscan(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let (start, end) = arg_iter.next_start_end()?;
+    let range = arg_iter.next_start_end()?;
     let mut opt_limit = None;
 
     // Parse optional limit
@@ -54,8 +50,7 @@ pub fn arscan(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         key_name,
         ValkeyValue::Array(Vec::new()),
         act_on_range,
-        start,
-        end,
+        range,
         opt_limit
     );
 

@@ -5,6 +5,9 @@
 use std::collections::HashMap;
 use valkey_module::ValkeyString;
 
+/// Type for position ranges
+pub type Range = (u64, u64);
+
 /// The struct that models the data in Rust
 #[derive(Default, Debug)]
 pub struct Array {
@@ -141,6 +144,47 @@ impl Array {
     /// Iterates over all positions along with their values
     pub fn iter(&self) -> impl Iterator<Item = (&u64, &ValkeyString)> {
         self.values.iter()
+    }
+
+    /// Iterates over all positions in an array
+    pub fn range_iter(&self, (start, end): Range) -> ArraySliceIter<'_> {
+        ArraySliceIter::new(start, end, self)
+    }
+}
+
+/// Iterator over a part of an [`Array`]
+pub struct ArraySliceIter<'a> {
+    /// The next position to get
+    next: u64,
+    /// The last position to get
+    end: u64,
+    /// The source to retrieve elements from
+    source: &'a Array,
+}
+
+impl<'a> ArraySliceIter<'a> {
+    pub fn new(mut start: u64, mut end: u64, source: &'a Array) -> Self {
+        if end < start {
+            std::mem::swap(&mut end, &mut start);
+        }
+        Self {
+            next: start,
+            end,
+            source,
+        }
+    }
+}
+impl<'a> Iterator for ArraySliceIter<'a> {
+    type Item = (u64, Option<&'a ValkeyString>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.next > self.end {
+            return None;
+        }
+
+        let item = (self.next, self.source.get(&self.next));
+        self.next += 1;
+        Some(item)
     }
 }
 
@@ -407,5 +451,66 @@ mod tests {
             ("insert-cursor", "4711".to_string()),
         ]);
         assert_eq!(info, expected);
+    }
+
+    #[test]
+    fn iterator_empty_array() {
+        let array = Array::new();
+
+        // normal range
+        let items = array.range_iter((40, 42)).collect::<Vec<_>>();
+        assert_eq!(items, &[(40, None), (41, None), (42, None)]);
+    }
+
+    #[test]
+    fn iterator_single_element_array() {
+        let mut array = Array::new();
+        array.set(&42, &vkstr("foo"));
+
+        // covering range, item in the middle
+        let items = array.range_iter((41, 43)).collect::<Vec<_>>();
+        assert_eq!(items, &[(41, None), (42, Some(&vkstr("foo"))), (43, None)]);
+
+        // covering range, item at start
+        let items = array.range_iter((42, 44)).collect::<Vec<_>>();
+        assert_eq!(items, &[(42, Some(&vkstr("foo"))), (43, None), (44, None)]);
+
+        // covering range, item at end
+        let items = array.range_iter((40, 42)).collect::<Vec<_>>();
+        assert_eq!(items, &[(40, None), (41, None), (42, Some(&vkstr("foo")))]);
+
+        // range before item
+        let items = array.range_iter((39, 41)).collect::<Vec<_>>();
+        assert_eq!(items, &[(39, None), (40, None), (41, None)]);
+
+        // range after item
+        let items = array.range_iter((43, 45)).collect::<Vec<_>>();
+        assert_eq!(items, &[(43, None), (44, None), (45, None)]);
+
+        // range is item
+        let items = array.range_iter((42, 42)).collect::<Vec<_>>();
+        assert_eq!(items, &[(42, Some(&vkstr("foo")))]);
+    }
+
+    #[test]
+    fn iterator_multiple_elements_array() {
+        let mut array = Array::new();
+        array.set(&42, &vkstr("foo"));
+        // No element at 43
+        array.set(&44, &vkstr("bar"));
+        array.set(&45, &vkstr("baz"));
+
+        let items = array.range_iter((41, 46)).collect::<Vec<_>>();
+        assert_eq!(
+            items,
+            &[
+                (41, None),
+                (42, Some(&vkstr("foo"))),
+                (43, None),
+                (44, Some(&vkstr("bar"))),
+                (45, Some(&vkstr("baz"))),
+                (46, None)
+            ]
+        );
     }
 }

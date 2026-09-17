@@ -108,6 +108,7 @@ macro_rules! read_write_creating_action {
         }
     }}
 }
+use crate::array::Range;
 pub(crate) use read_write_creating_action;
 
 /// Extra utilities for parsing the next arguments
@@ -124,7 +125,7 @@ pub trait NextArgExtras {
     /// See [`Self::next_start_end_part`] for the available abbreviations.
     ///
     /// The returned pair is guaranteed that the start is not after the end.
-    fn next_start_end(&mut self) -> ValkeyResult<(u64, u64)>;
+    fn next_start_end(&mut self) -> ValkeyResult<Range>;
 }
 
 impl<T> NextArgExtras for T
@@ -140,7 +141,7 @@ where
             })
     }
 
-    fn next_start_end(&mut self) -> ValkeyResult<(u64, u64)> {
+    fn next_start_end(&mut self) -> ValkeyResult<Range> {
         let mut start = self.next_start_end_part()?;
         let mut end = self.next_start_end_part()?;
         if end < start {

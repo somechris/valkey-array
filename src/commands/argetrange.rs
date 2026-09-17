@@ -1,6 +1,7 @@
 //! Implementation of the `ARGETRANGE` command
 
 use crate::Array;
+use crate::array::Range;
 use crate::commands::utils::{
     NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
 };
@@ -8,9 +9,10 @@ use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Executes the command on each position in the range (inclusive)
-fn act_on_range(array: &mut Array, start: u64, end: u64) -> Vec<ValkeyValue> {
-    (start..=end)
-        .map(|position| match array.get(&position) {
+fn act_on_range(array: &mut Array, range: Range) -> Vec<ValkeyValue> {
+    array
+        .range_iter(range)
+        .map(|(_position, maybe_value)| match maybe_value {
             Some(str) => str.into(),
             None => ValkeyValue::Null,
         })
@@ -21,7 +23,7 @@ fn act_on_range(array: &mut Array, start: u64, end: u64) -> Vec<ValkeyValue> {
 pub fn argetrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let (start, end) = arg_iter.next_start_end()?;
+    let range = arg_iter.next_start_end()?;
 
     err_if_further_arguments(arg_iter)?;
 
@@ -30,8 +32,7 @@ pub fn argetrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         key_name,
         ValkeyValue::Array(Vec::new()),
         act_on_range,
-        start,
-        end
+        range,
     );
 
     Ok(ValkeyValue::Array(items))

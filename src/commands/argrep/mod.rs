@@ -3,6 +3,7 @@
 pub mod matchers;
 
 use crate::Array;
+use crate::array::Range;
 use crate::commands::argrep::matchers::{
     ContainsMatcher, ExactMatcher, GlobMatcher, Matcher, MatchingFn, RegexMatcher,
 };
@@ -58,14 +59,9 @@ impl SubstituteMatcher {
 }
 
 /// Executes the command on each position in the range (inclusive)
-#[allow(
-    clippy::too_many_arguments,
-    reason = "We're lax, and this is for internal use only"
-)]
 fn act_on_range(
     array: &mut Array,
-    start: u64,
-    end: u64,
+    range: Range,
     matchers: Vec<SubstituteMatcher>,
     opt_limit: Option<u64>,
     case_sensitive: bool,
@@ -83,8 +79,8 @@ fn act_on_range(
         .collect::<ValkeyResult<Vec<MatchingFn>>>()?;
 
     let mut items = vec![];
-    for position in start..=end {
-        if let Some(value) = array.get(&position)
+    for (position, maybe_value) in array.range_iter(range) {
+        if let Some(value) = maybe_value
             && ((conjunctive && matcher_fns.iter().all(|matcher_fn| matcher_fn(value)))
                 || (!conjunctive && matcher_fns.iter().any(|matcher_fn| matcher_fn(value))))
         {
@@ -109,7 +105,7 @@ fn act_on_range(
 pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let (start, end) = arg_iter.next_start_end()?;
+    let range = arg_iter.next_start_end()?;
     let mut opt_limit = None;
     let mut case_sensitive = true;
     let mut with_values = false;
@@ -154,8 +150,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         key_name,
         ValkeyValue::Array(Vec::new()),
         act_on_range,
-        start,
-        end,
+        range,
         matchers,
         opt_limit,
         case_sensitive,
@@ -350,8 +345,7 @@ mod tests {
         // Performing the match
         let result = act_on_range(
             &mut array,
-            1,
-            9,
+            (1, 9),
             matcher_param,
             limited_param,
             case_sensitivity_param,
@@ -398,7 +392,7 @@ mod tests {
             SubstituteMatcher::Exact(vkstr("bar")),
             SubstituteMatcher::Exact(vkstr("quux")),
         ];
-        let result = act_on_range(&mut array, 0, 4, matcher, None, true, false, false).unwrap();
+        let result = act_on_range(&mut array, (0, 4), matcher, None, true, false, false).unwrap();
 
         assert_eq!(result, u32s_to_vec_value(&[0, 1, 2, 4]))
     }
@@ -421,7 +415,7 @@ mod tests {
             SubstituteMatcher::Contains(vkstr("ba")),
             SubstituteMatcher::Contains(vkstr("z")),
         ];
-        let result = act_on_range(&mut array, 0, 8, matcher, None, true, false, true).unwrap();
+        let result = act_on_range(&mut array, (0, 8), matcher, None, true, false, true).unwrap();
 
         assert_eq!(result, u32s_to_vec_value(&[2, 3, 4]))
     }
