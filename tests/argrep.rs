@@ -66,7 +66,7 @@ fn faulty_calls() {
         .arg("BAZ")
         .query::<Value>(&mut con)
         .unwrap_err();
-    assert_contains!(err.to_string(), "operation");
+    assert_contains!(err.to_string(), "wrong");
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();

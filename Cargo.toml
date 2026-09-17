@@ -23,6 +23,7 @@ valkey-module = { version = "0.1.14", features=["enable-system-alloc", "test-shi
 redis = "2.0.0-rc.1"
 redis-test = "2.0.0-rc.1"
 assertables = "10.1.0"
+rstest = "0.27.0"
 
 [lib]
 crate-type = ["cdylib"]
