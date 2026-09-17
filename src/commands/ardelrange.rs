@@ -1,16 +1,15 @@
 //! Implementation of the `ARDELRANGE` command
 
 use crate::Array;
-use crate::commands::utils::{err_if_further_arguments, read_write_action, to_arg_iter};
+use crate::commands::utils::{
+    NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
+};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Executes the command on each position in the range (inclusive)
-fn act_on_range(array: &mut Array, mut start: u64, mut end: u64) -> u64 {
+fn act_on_range(array: &mut Array, start: u64, end: u64) -> u64 {
     let mut count = 0;
-    if end < start {
-        std::mem::swap(&mut end, &mut start);
-    }
 
     for position in start..=end {
         count += array.del(&position);
@@ -22,8 +21,7 @@ fn act_on_range(array: &mut Array, mut start: u64, mut end: u64) -> u64 {
 pub fn ardelrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let start = &arg_iter.next_u64()?;
-    let end = &arg_iter.next_u64()?;
+    let (start, end) = arg_iter.next_start_end()?;
 
     err_if_further_arguments(arg_iter)?;
 
@@ -32,8 +30,8 @@ pub fn ardelrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         key_name,
         ValkeyValue::Integer(0),
         act_on_range,
-        *start,
-        *end
+        start,
+        end
     );
 
     Ok(ValkeyValue::Integer(count as i64))

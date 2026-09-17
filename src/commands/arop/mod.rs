@@ -4,7 +4,9 @@ mod ops;
 
 use crate::Array;
 use crate::commands::arop::ops::Operation;
-use crate::commands::utils::{err_if_further_arguments, read_write_action, to_arg_iter};
+use crate::commands::utils::{
+    NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
+};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -33,15 +35,10 @@ pub enum SubstituteOperation {
 /// Executes the command on each position in the range (inclusive)
 fn act_on_range_typed<OP: Operation>(
     array: &mut Array,
-    mut start: u64,
-    mut end: u64,
+    start: u64,
+    end: u64,
     mut op: OP,
 ) -> ValkeyResult {
-    if end < start {
-        std::mem::swap(&mut end, &mut start);
-    }
-
-    //let (accumulate, build_result) = op.get_funcs();
     for position in start..=end {
         if let Some(value) = array.get(&position) {
             op.accumulate(value);
@@ -76,8 +73,7 @@ fn act_on_range(
 pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let start = &arg_iter.next_u64()?;
-    let end = &arg_iter.next_u64()?;
+    let (start, end) = arg_iter.next_start_end()?;
 
     // Parse operation
     let op_subst = match arg_iter
@@ -107,8 +103,8 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         key_name,
         ValkeyValue::Array(Vec::new()),
         act_on_range,
-        *start,
-        *end,
+        start,
+        end,
         op_subst
     )
 }
