@@ -22,7 +22,16 @@ fix:
 docs:
 	cargo doc --no-deps
 
-test: build-dev  # Running `build-dev` before ensures the integration tests can load the newest module
+# `test-prep` prepares for running tests
+test-prep: build-dev  # Running `build-dev` before ensures the integration tests can load the newest module
+
+test: test-prep
 	cargo test
+
+test-unit: test-prep
+	cargo test --lib
+
+test-int: test-prep
+	cargo test --test '*'
 
 full-monty: fix test docs
