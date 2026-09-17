@@ -151,7 +151,6 @@ mod tests {
         use crate::Array;
         use crate::test_utils::vkstr;
 
-        #[allow(clippy::panic, reason = "assertions are allowed to crash out")]
         pub fn assert_array_entry<S: Into<String>>(array: &Array, position: u64, expected: S) {
             let value = array
                 .get(&position)
@@ -161,7 +160,6 @@ mod tests {
             assert_eq!(*value, *expected_str, "\"{value}\" == \"{expected_str}\"");
         }
 
-        #[allow(clippy::panic, reason = "assertions are allowed to crash out")]
         pub fn assert_array_no_entry(array: &Array, position: u64) {
             if let Some(entry) = array.get(&position) {
                 panic!("array should be empty but is \"{entry}\" at {position}");
