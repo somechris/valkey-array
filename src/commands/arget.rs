@@ -5,6 +5,10 @@ use crate::commands::utils::{err_if_further_arguments, read_only_action, to_arg_
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
+fn retrieve(array: &Array, position: &u64) -> Option<ValkeyString> {
+    array.get(position).cloned()
+}
+
 /// Implements the `ARGET` command
 pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
@@ -13,7 +17,7 @@ pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     err_if_further_arguments(arg_iter)?;
 
-    let maybe_element = read_only_action!(ctx, key_name, ValkeyValue::Null, Array::get, position);
+    let maybe_element = read_only_action!(ctx, key_name, ValkeyValue::Null, retrieve, position);
 
     Ok(maybe_element.into())
 }

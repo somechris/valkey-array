@@ -17,8 +17,8 @@ impl MatchOperation {
     }
 }
 impl Operation for MatchOperation {
-    fn accumulate(&mut self, value: ValkeyString) {
-        if value == self.search_expr {
+    fn accumulate(&mut self, value: &ValkeyString) {
+        if value == &self.search_expr {
             self.counter += 1;
         }
     }
@@ -47,11 +47,11 @@ mod test {
     fn mixed() {
         let mut op = MatchOperation::new(vkstr("foo"));
 
-        op.accumulate(vkstr("foo")); // matches
-        op.accumulate(vkstr("bar")); // does not match
-        op.accumulate(vkstr("foo")); // matches
-        op.accumulate(vkstr("  foo  ")); // does not match (padded)
-        op.accumulate(vkstr("foo")); // matches
+        op.accumulate(&vkstr("foo")); // matches
+        op.accumulate(&vkstr("bar")); // does not match
+        op.accumulate(&vkstr("foo")); // matches
+        op.accumulate(&vkstr("  foo  ")); // does not match (padded)
+        op.accumulate(&vkstr("foo")); // matches
 
         let result = op.build_result();
         assert_eq!(result, ValkeyValue::Integer(3));

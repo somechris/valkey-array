@@ -15,7 +15,7 @@ impl UsedOperation {
 }
 
 impl Operation for UsedOperation {
-    fn accumulate(&mut self, _value: ValkeyString) {
+    fn accumulate(&mut self, _value: &ValkeyString) {
         self.counter += 1;
     }
 
@@ -43,11 +43,11 @@ mod test {
     fn mixed() {
         let mut op = UsedOperation::new();
 
-        op.accumulate(vkstr("foo"));
-        op.accumulate(vkstr("4.2"));
-        op.accumulate(vkstr("bar"));
-        op.accumulate(vkstr("2.3"));
-        op.accumulate(vkstr("baz"));
+        op.accumulate(&vkstr("foo"));
+        op.accumulate(&vkstr("4.2"));
+        op.accumulate(&vkstr("bar"));
+        op.accumulate(&vkstr("2.3"));
+        op.accumulate(&vkstr("baz"));
 
         let result = op.build_result();
         assert_eq!(result, ValkeyValue::Integer(5));

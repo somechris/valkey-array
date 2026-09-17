@@ -25,7 +25,7 @@ pub use xor::XorOperation;
 /// An [`Operation`]s functions
 pub trait Operation {
     /// Accumulates a found value
-    fn accumulate(&mut self, value: ValkeyString);
+    fn accumulate(&mut self, value: &ValkeyString);
 
     /// Builds an accumulator's result
     fn build_result(self) -> ValkeyValue;

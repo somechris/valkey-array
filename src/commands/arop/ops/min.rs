@@ -24,7 +24,7 @@ impl MinOperation {
 }
 
 impl Operation for MinOperation {
-    fn accumulate(&mut self, value: ValkeyString) {
+    fn accumulate(&mut self, value: &ValkeyString) {
         if let Ok(float) = value.parse_float() {
             self.minimum = self.minimum.min(float);
             self.found_elements = true;
@@ -59,9 +59,9 @@ mod test {
     fn all_numbers() {
         let mut op = MinOperation::new();
 
-        op.accumulate(vkstr("4.2"));
-        op.accumulate(vkstr("2.3"));
-        op.accumulate(vkstr("471.1"));
+        op.accumulate(&vkstr("4.2"));
+        op.accumulate(&vkstr("2.3"));
+        op.accumulate(&vkstr("471.1"));
 
         let result = op.build_result();
         assert_eq!(result, ValkeyValue::Float(2.3));
@@ -71,9 +71,9 @@ mod test {
     fn all_non_numbers() {
         let mut op = MinOperation::new();
 
-        op.accumulate(vkstr("foo"));
-        op.accumulate(vkstr("bar"));
-        op.accumulate(vkstr("baz"));
+        op.accumulate(&vkstr("foo"));
+        op.accumulate(&vkstr("bar"));
+        op.accumulate(&vkstr("baz"));
 
         let result = op.build_result();
         assert_eq!(result, ValkeyValue::Null);
@@ -83,11 +83,11 @@ mod test {
     fn mixed() {
         let mut op = MinOperation::new();
 
-        op.accumulate(vkstr("foo"));
-        op.accumulate(vkstr("4.2"));
-        op.accumulate(vkstr("bar"));
-        op.accumulate(vkstr("2.3"));
-        op.accumulate(vkstr("baz"));
+        op.accumulate(&vkstr("foo"));
+        op.accumulate(&vkstr("4.2"));
+        op.accumulate(&vkstr("bar"));
+        op.accumulate(&vkstr("2.3"));
+        op.accumulate(&vkstr("baz"));
 
         let result = op.build_result();
         assert_eq!(result, ValkeyValue::Float(2.3));

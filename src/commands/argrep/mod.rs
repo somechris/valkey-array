@@ -85,8 +85,8 @@ fn act_on_range(
     let mut items = vec![];
     for position in start..=end {
         if let Some(value) = array.get(&position)
-            && ((conjunctive && matcher_fns.iter().all(|matcher_fn| matcher_fn(&value)))
-                || (!conjunctive && matcher_fns.iter().any(|matcher_fn| matcher_fn(&value))))
+            && ((conjunctive && matcher_fns.iter().all(|matcher_fn| matcher_fn(value)))
+                || (!conjunctive && matcher_fns.iter().any(|matcher_fn| matcher_fn(value))))
         {
             if with_values {
                 let vkpos = ValkeyValue::from(position as i64);

@@ -17,7 +17,7 @@ impl OrOperation {
 }
 
 impl Operation for OrOperation {
-    fn accumulate(&mut self, value: ValkeyString) {
+    fn accumulate(&mut self, value: &ValkeyString) {
         if let Ok(integer) = vkstring_to_floored_i64(value) {
             self.result |= integer;
             self.found_elements = true;
@@ -52,9 +52,9 @@ mod test {
     fn all_numbers() {
         let mut op = OrOperation::new();
 
-        op.accumulate(vkstr("-8.2"));
-        op.accumulate(vkstr("3.3"));
-        op.accumulate(vkstr("1"));
+        op.accumulate(&vkstr("-8.2"));
+        op.accumulate(&vkstr("3.3"));
+        op.accumulate(&vkstr("1"));
 
         let result = op.build_result();
         assert_eq!(result, ValkeyValue::Integer(-5));
@@ -64,9 +64,9 @@ mod test {
     fn all_non_numbers() {
         let mut op = OrOperation::new();
 
-        op.accumulate(vkstr("foo"));
-        op.accumulate(vkstr("bar"));
-        op.accumulate(vkstr("baz"));
+        op.accumulate(&vkstr("foo"));
+        op.accumulate(&vkstr("bar"));
+        op.accumulate(&vkstr("baz"));
 
         let result = op.build_result();
         assert_eq!(result, ValkeyValue::Null);
@@ -76,11 +76,11 @@ mod test {
     fn mixed() {
         let mut op = OrOperation::new();
 
-        op.accumulate(vkstr("foo"));
-        op.accumulate(vkstr("32.2"));
-        op.accumulate(vkstr("bar"));
-        op.accumulate(vkstr("16.3"));
-        op.accumulate(vkstr("baz"));
+        op.accumulate(&vkstr("foo"));
+        op.accumulate(&vkstr("32.2"));
+        op.accumulate(&vkstr("bar"));
+        op.accumulate(&vkstr("16.3"));
+        op.accumulate(&vkstr("baz"));
 
         let result = op.build_result();
         assert_eq!(result, ValkeyValue::Integer(48));

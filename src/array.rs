@@ -55,9 +55,8 @@ impl Array {
     }
 
     /// Gets the value at a given position
-    // Returns an owned value instead of a reference as `ARGET` needs an owned value anyways.
-    pub fn get(&self, position: &u64) -> Option<ValkeyString> {
-        self.values.get(position).cloned()
+    pub fn get(&self, position: &u64) -> Option<&ValkeyString> {
+        self.values.get(position)
     }
 
     /// Gets the position where the next item will get inserted
@@ -157,7 +156,7 @@ mod tests {
                 .unwrap_or_else(|| panic!("array should have a value at {position}"));
 
             let expected_str = vkstr(expected);
-            assert_eq!(*value, *expected_str, "\"{value}\" == \"{expected_str}\"");
+            assert_eq!(*value, expected_str, "\"{value}\" == \"{expected_str}\"");
         }
 
         pub fn assert_array_no_entry(array: &Array, position: u64) {
