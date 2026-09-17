@@ -10,7 +10,7 @@ fn act_on_indices(
     array: &Array,
     iter: impl Iterator<Item = ValkeyString>,
 ) -> ValkeyResult<Vec<ValkeyValue>> {
-    iter.map(|position_str| Ok(array.get(&(position_str.parse_unsigned_integer()?)).into()))
+    iter.map(|position_str| Ok(array.get(position_str.parse_unsigned_integer()?).into()))
         .collect()
 }
 

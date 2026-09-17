@@ -13,7 +13,7 @@ fn act_on_range(array: &mut Array, (start, end): Range) -> u64 {
     let mut count = 0;
 
     for position in start..=end {
-        count += array.del(&position);
+        count += array.del(position);
     }
     count
 }

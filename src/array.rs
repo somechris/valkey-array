@@ -40,8 +40,8 @@ impl Array {
     }
 
     /// Deletes the value at a given position
-    pub fn del(&mut self, position: &u64) -> u64 {
-        let count = match self.values.remove(position) {
+    pub fn del(&mut self, position: u64) -> u64 {
+        let count = match self.values.remove(&position) {
             Some(_) => 1,
             None => 0,
         };
@@ -58,8 +58,8 @@ impl Array {
     }
 
     /// Gets the value at a given position
-    pub fn get(&self, position: &u64) -> Option<&ValkeyString> {
-        self.values.get(position)
+    pub fn get(&self, position: u64) -> Option<&ValkeyString> {
+        self.values.get(&position)
     }
 
     /// Gets the position where the next item will get inserted
@@ -69,10 +69,10 @@ impl Array {
 
     /// Gets the value at a given position
     // Returns an owned value instead of a reference as `ARGET` needs an owned value anyways.
-    pub fn insert(&mut self, value: &ValkeyString) -> u64 {
+    pub fn insert(&mut self, value: ValkeyString) -> u64 {
         // Inserting the value
         let position = self.insert_cursor;
-        self.set(&position, value);
+        self.set(position, value);
 
         // Bumping the insert cursor
         self.insert_cursor += 1;
@@ -86,7 +86,7 @@ impl Array {
     /// # Returns
     ///
     /// The last inserted position is returned
-    pub fn insert_ring(&mut self, buffer_size: u64, value: &ValkeyString) -> u64 {
+    pub fn insert_ring(&mut self, buffer_size: u64, value: ValkeyString) -> u64 {
         // Bring the cursor into the expected range
         self.insert_cursor %= buffer_size;
 
@@ -104,9 +104,9 @@ impl Array {
     /// # Returns
     ///
     /// If the slot was previously unused, the function returns `1`. Otherwise `0`.
-    pub fn set(&mut self, position: &u64, value: &ValkeyString) -> usize {
+    pub fn set(&mut self, position: u64, value: ValkeyString) -> usize {
         self.next_highest_position = self.next_highest_position.max(position + 1);
-        if self.values.insert(*position, value.clone()).is_some() {
+        if self.values.insert(position, value).is_some() {
             // The position already had a value, so it's not a new slot
             0
         } else {
@@ -182,7 +182,7 @@ impl<'a> Iterator for ArraySliceIter<'a> {
             return None;
         }
 
-        let item = (self.next, self.source.get(&self.next));
+        let item = (self.next, self.source.get(self.next));
         self.next += 1;
         Some(item)
     }
@@ -196,7 +196,7 @@ mod tests {
 
         pub fn assert_array_entry<S: Into<String>>(array: &Array, position: u64, expected: S) {
             let value = array
-                .get(&position)
+                .get(position)
                 .unwrap_or_else(|| panic!("array should have a value at {position}"));
 
             let expected_str = vkstr(expected);
@@ -204,7 +204,7 @@ mod tests {
         }
 
         pub fn assert_array_no_entry(array: &Array, position: u64) {
-            if let Some(entry) = array.get(&position) {
+            if let Some(entry) = array.get(position) {
                 panic!("array should be empty but is \"{entry}\" at {position}");
             }
         }
@@ -225,7 +225,7 @@ mod tests {
         assert_array_no_entry(&array, 4711);
 
         // Adding a single slot
-        let added_slots = array.set(&23, &vkstr("foo"));
+        let added_slots = array.set(23, vkstr("foo"));
         assert_eq!(added_slots, 1); // New slot, as it was empty before
 
         assert_array_entry(&array, 23, "foo");
@@ -233,7 +233,7 @@ mod tests {
         assert_array_no_entry(&array, 4711);
 
         // Adding a different slot
-        let added_slots = array.set(&42, &vkstr("bar"));
+        let added_slots = array.set(42, vkstr("bar"));
         assert_eq!(added_slots, 1);
 
         assert_array_entry(&array, 23, "foo");
@@ -241,7 +241,7 @@ mod tests {
         assert_array_no_entry(&array, 4711);
 
         // Adding to first slot again
-        let added_slots = array.set(&23, &vkstr("baz"));
+        let added_slots = array.set(23, vkstr("baz"));
         assert_eq!(added_slots, 0); // No new slot, as it was occupied before
 
         assert_array_entry(&array, 23, "baz");
@@ -254,12 +254,12 @@ mod tests {
         let mut array = Array::new();
 
         // Deleting an unused slot
-        let deleted = array.del(&42);
+        let deleted = array.del(42);
         assert_eq!(deleted, 0);
 
         // Setting a slot and deleting it again
-        array.set(&42, &vkstr("bar"));
-        let deleted = array.del(&42);
+        array.set(42, vkstr("bar"));
+        let deleted = array.del(42);
         assert_eq!(deleted, 1);
     }
 
@@ -269,10 +269,10 @@ mod tests {
 
         assert_eq!(array.count(), 0);
 
-        array.set(&42, &vkstr("bar"));
+        array.set(42, vkstr("bar"));
         assert_eq!(array.count(), 1);
 
-        array.set(&23, &vkstr("baz"));
+        array.set(23, vkstr("baz"));
         assert_eq!(array.count(), 2);
     }
 
@@ -282,10 +282,10 @@ mod tests {
 
         assert_eq!(array.next_highest_position(), 0);
 
-        array.set(&42, &vkstr("bar"));
+        array.set(42, vkstr("bar"));
         assert_eq!(array.next_highest_position(), 43);
 
-        array.set(&23, &vkstr("baz"));
+        array.set(23, vkstr("baz"));
         assert_eq!(array.next_highest_position(), 43);
     }
 
@@ -293,13 +293,13 @@ mod tests {
     fn array_next_highest_position_after_deletion() {
         let mut array = Array::new();
 
-        array.set(&23, &vkstr("baz"));
-        array.set(&42, &vkstr("bar"));
+        array.set(23, vkstr("baz"));
+        array.set(42, vkstr("bar"));
 
-        array.del(&42);
+        array.del(42);
         assert_eq!(array.next_highest_position(), 24);
 
-        array.del(&23);
+        array.del(23);
         assert_eq!(array.next_highest_position(), 0);
     }
 
@@ -308,7 +308,7 @@ mod tests {
         let mut array = Array::new();
 
         // First insert
-        let res = array.insert(&vkstr("foo"));
+        let res = array.insert(vkstr("foo"));
         assert_eq!(res, 0);
 
         assert_array_entry(&array, 0, "foo");
@@ -316,7 +316,7 @@ mod tests {
         assert_array_no_entry(&array, 2);
 
         // Second insert
-        let res = array.insert(&vkstr("bar"));
+        let res = array.insert(vkstr("bar"));
         assert_eq!(res, 1);
 
         assert_array_entry(&array, 0, "foo");
@@ -324,9 +324,9 @@ mod tests {
         assert_array_no_entry(&array, 2);
 
         // Insert after higher set
-        array.set(&42, &vkstr("baz"));
+        array.set(42, vkstr("baz"));
 
-        let res = array.insert(&vkstr("quux"));
+        let res = array.insert(vkstr("quux"));
         assert_eq!(res, 2);
 
         assert_array_entry(&array, 0, "foo");
@@ -342,19 +342,19 @@ mod tests {
         // first.
 
         // Insert first item
-        let res = array.insert_ring(3, &vkstr("foo"));
+        let res = array.insert_ring(3, vkstr("foo"));
         assert_eq!(res, 0);
 
         // Insert second item
-        let res = array.insert_ring(3, &vkstr("bar"));
+        let res = array.insert_ring(3, vkstr("bar"));
         assert_eq!(res, 1);
 
         // Insert third item
-        let res = array.insert_ring(3, &vkstr("baz"));
+        let res = array.insert_ring(3, vkstr("baz"));
         assert_eq!(res, 2);
 
         // Insert fourth item. This should overwrite the first
-        let res = array.insert_ring(3, &vkstr("quux"));
+        let res = array.insert_ring(3, vkstr("quux"));
         assert_eq!(res, 0);
 
         assert_array_entry(&array, 0, "quux");
@@ -375,7 +375,7 @@ mod tests {
 
         // Then treat it as ring buffer of size 23 and insert an element, which should land at
         // position 19 (= 42 % 23)
-        array.insert_ring(23, &vkstr("foo"));
+        array.insert_ring(23, vkstr("foo"));
 
         assert_array_entry(&array, 19, "foo");
         assert_array_no_entry(&array, 42);
@@ -394,22 +394,22 @@ mod tests {
         assert_eq!(res, 0);
 
         // First insert
-        array.insert(&vkstr("foo"));
+        array.insert(vkstr("foo"));
         let res = array.get_insert_cursor();
         assert_eq!(res, 1);
 
         // Deleting it again does not change the cursor
-        array.del(&0);
+        array.del(0);
         let res = array.get_insert_cursor();
         assert_eq!(res, 1);
 
         // Set a value at a higher position to check that it does not influence the cursor
-        array.set(&42, &vkstr("bar"));
+        array.set(42, vkstr("bar"));
         let res = array.get_insert_cursor();
         assert_eq!(res, 1);
 
         // Final insertion to check that we're not stuck at 1
-        array.insert(&vkstr("foo"));
+        array.insert(vkstr("foo"));
         let res = array.get_insert_cursor();
         assert_eq!(res, 2);
     }
@@ -439,8 +439,8 @@ mod tests {
         assert_eq!(info, expected);
 
         // Setting some data in the array
-        array.set(&42, &vkstr("bar"));
-        array.set(&23, &vkstr("baz"));
+        array.set(42, vkstr("bar"));
+        array.set(23, vkstr("baz"));
         array.set_insert_cursor(4711);
 
         // Checking info again
@@ -465,7 +465,7 @@ mod tests {
     #[test]
     fn iterator_single_element_array() {
         let mut array = Array::new();
-        array.set(&42, &vkstr("foo"));
+        array.set(42, vkstr("foo"));
 
         // covering range, item in the middle
         let items = array.range_iter((41, 43)).collect::<Vec<_>>();
@@ -495,10 +495,10 @@ mod tests {
     #[test]
     fn iterator_multiple_elements_array() {
         let mut array = Array::new();
-        array.set(&42, &vkstr("foo"));
+        array.set(42, vkstr("foo"));
         // No element at 43
-        array.set(&44, &vkstr("bar"));
-        array.set(&45, &vkstr("baz"));
+        array.set(44, vkstr("bar"));
+        array.set(45, vkstr("baz"));
 
         let items = array.range_iter((41, 46)).collect::<Vec<_>>();
         assert_eq!(

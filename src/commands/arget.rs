@@ -5,7 +5,7 @@ use crate::commands::utils::{err_if_further_arguments, read_only_action, to_arg_
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
-fn retrieve(array: &Array, position: &u64) -> Option<ValkeyString> {
+fn retrieve(array: &Array, position: u64) -> Option<ValkeyString> {
     array.get(position).cloned()
 }
 
@@ -13,7 +13,7 @@ fn retrieve(array: &Array, position: &u64) -> Option<ValkeyString> {
 pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let position = &arg_iter.next_u64()?;
+    let position = arg_iter.next_u64()?;
 
     err_if_further_arguments(arg_iter)?;
 

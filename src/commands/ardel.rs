@@ -9,7 +9,7 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 pub fn ardel(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let position = &arg_iter.next_u64()?;
+    let position = arg_iter.next_u64()?;
 
     err_if_further_arguments(arg_iter)?;
 

@@ -328,7 +328,7 @@ mod tests {
         // Building the array to match against
         let mut array = Array::new();
         for (pos, value) in values {
-            array.set(&(pos as u64), &vkstr(value));
+            array.set(pos as u64, vkstr(value));
         }
 
         // Building the match parameters
@@ -382,11 +382,11 @@ mod tests {
     fn act_on_range_multiple_matchers_disjunctive() {
         // Building the array to match against
         let mut array = Array::new();
-        array.set(&0, &vkstr("foobar"));
-        array.set(&1, &vkstr("foo"));
-        array.set(&2, &vkstr("bar"));
-        array.set(&3, &vkstr("baz"));
-        array.set(&4, &vkstr("quux"));
+        array.set(0, vkstr("foobar"));
+        array.set(1, vkstr("foo"));
+        array.set(2, vkstr("bar"));
+        array.set(3, vkstr("baz"));
+        array.set(4, vkstr("quux"));
         let matcher = vec![
             SubstituteMatcher::Contains(vkstr("foo")),
             SubstituteMatcher::Exact(vkstr("bar")),
@@ -401,15 +401,15 @@ mod tests {
     fn act_on_range_multiple_matchers_conjunctive() {
         // Building the array to match against
         let mut array = Array::new();
-        array.set(&0, &vkstr("foobar"));
-        array.set(&1, &vkstr("barfoo"));
-        array.set(&2, &vkstr("foobaz"));
-        array.set(&3, &vkstr("bazquuxfoo"));
-        array.set(&4, &vkstr("bafooz"));
-        array.set(&5, &vkstr("foo"));
-        array.set(&6, &vkstr("bar"));
-        array.set(&7, &vkstr("baz"));
-        array.set(&8, &vkstr("quux"));
+        array.set(0, vkstr("foobar"));
+        array.set(1, vkstr("barfoo"));
+        array.set(2, vkstr("foobaz"));
+        array.set(3, vkstr("bazquuxfoo"));
+        array.set(4, vkstr("bafooz"));
+        array.set(5, vkstr("foo"));
+        array.set(6, vkstr("bar"));
+        array.set(7, vkstr("baz"));
+        array.set(8, vkstr("quux"));
         let matcher = vec![
             SubstituteMatcher::Contains(vkstr("foo")),
             SubstituteMatcher::Contains(vkstr("ba")),

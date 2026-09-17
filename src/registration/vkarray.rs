@@ -69,7 +69,7 @@ fn vkarray_rdb_load_version_0(rdb: *mut raw::RedisModuleIO) -> Result<Array, Err
     for _ in 0..count {
         let position = raw::load_unsigned(rdb)?;
         let value = raw::load_string(rdb)?;
-        array.set(&position, &value);
+        array.set(position, value);
     }
 
     Ok(array)
