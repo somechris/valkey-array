@@ -65,9 +65,16 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARGETRANGE").arg(key).arg(start).arg(end).query(self)
     }
 
-    /// Inserts an element into the array at the insert cursor
-    fn arinfo(&mut self, key: &str) -> RedisResult<HashMap<String, String>> {
-        cmd("ARINFO").arg(key).query(self)
+    /// Gets info about the array
+    fn arinfo(&mut self, key: &str, full: bool) -> RedisResult<HashMap<String, String>> {
+        let mut command = cmd("ARINFO");
+        command.arg(key);
+
+        if full {
+            command.arg("FULL");
+        }
+
+        command.query(self)
     }
 
     /// Searches a range for key/values

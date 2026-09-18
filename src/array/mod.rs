@@ -80,12 +80,8 @@ pub trait ArrayType: Sized {
     /// * `count` - number of set elements
     /// * `len` - maximum used position + 1 (0 if the array is empty)
     /// * `insert-cursor` - position of the insert cursor
-    fn info(&self) -> HashMap<&'static str, String> {
-        HashMap::from([
-            ("count", self.count().to_string()),
-            ("len", self.next_highest_position().to_string()),
-            ("insert-cursor", self.get_insert_cursor().to_string()),
-        ])
+    fn info(&self, _full: bool) -> HashMap<&'static str, String> {
+        collect_generic_info(self)
     }
 
     /// Iterates over all positions along with their values
@@ -95,4 +91,15 @@ pub trait ArrayType: Sized {
     fn range_iter(&self, (start, end): Range) -> GenericArrayRangeIter<'_, Self> {
         GenericArrayRangeIter::new(start, end, self)
     }
+}
+
+/// Collects generic info about an array
+///
+/// This is useful as base implementation of [`Array::info`]
+pub fn collect_generic_info<ARR: ArrayType>(array: &ARR) -> HashMap<&'static str, String> {
+    HashMap::from([
+        ("count", array.count().to_string()),
+        ("len", array.next_highest_position().to_string()),
+        ("insert-cursor", array.get_insert_cursor().to_string()),
+    ])
 }

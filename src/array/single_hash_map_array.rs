@@ -1,6 +1,6 @@
 //! Array implemented by a single [`HashMap`]
 //!
-use crate::array::ArrayType;
+use crate::array::{ArrayType, collect_generic_info};
 use std::collections::HashMap;
 use valkey_module::ValkeyString;
 
@@ -103,12 +103,14 @@ impl ArrayType for SingleHashMapArray {
         1
     }
 
-    fn info(&self) -> HashMap<&'static str, String> {
-        HashMap::from([
-            ("count", self.count().to_string()),
-            ("len", self.next_highest_position.to_string()),
-            ("insert-cursor", self.insert_cursor.to_string()),
-        ])
+    fn info(&self, full: bool) -> HashMap<&'static str, String> {
+        let mut ret = collect_generic_info(self);
+
+        if full {
+            ret.insert("capacity", self.values.capacity().to_string());
+        }
+
+        ret
     }
 
     fn iter(&self) -> impl Iterator<Item = (&u64, &ValkeyString)> {
@@ -364,7 +366,7 @@ mod tests {
         let mut array = SingleHashMapArray::new();
 
         // Checking on an empty Array
-        let info = array.info();
+        let info = array.info(false);
         let expected = HashMap::from([
             ("count", "0".to_string()),
             ("len", "0".to_string()),
@@ -378,11 +380,26 @@ mod tests {
         array.set_insert_cursor(4711);
 
         // Checking info again
-        let info = array.info();
+        let info = array.info(false);
         let expected = HashMap::from([
             ("count", "2".to_string()),
             ("len", "43".to_string()),
             ("insert-cursor", "4711".to_string()),
+        ]);
+        assert_eq!(info, expected);
+    }
+
+    #[test]
+    fn array_info_full() {
+        let array = SingleHashMapArray::new();
+
+        // Checking on an empty Array
+        let info = array.info(true);
+        let expected = HashMap::from([
+            ("count", "0".to_string()),
+            ("len", "0".to_string()),
+            ("insert-cursor", "0".to_string()),
+            ("capacity", "0".to_string()),
         ]);
         assert_eq!(info, expected);
     }

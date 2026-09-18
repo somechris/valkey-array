@@ -3,7 +3,7 @@
 pub mod utils;
 
 use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
-use assertables::{assert_contains, assert_is_empty};
+use assertables::{assert_contains, assert_ge, assert_is_empty};
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
 use std::collections::HashMap;
@@ -27,7 +27,7 @@ fn faulty_calls() {
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
-    let err = con.arinfo("bar").unwrap_err();
+    let err = con.arinfo("bar", false).unwrap_err();
     assert_eq!(err.code().unwrap(), "WRONGTYPE");
 }
 
@@ -37,7 +37,7 @@ fn simple() {
     let mut con = ctx.connection();
 
     // Checking on an unused key
-    let res = con.arinfo("foo").unwrap();
+    let res = con.arinfo("foo", false).unwrap();
     assert_is_empty!(res);
 
     // Set some data in the array
@@ -46,11 +46,34 @@ fn simple() {
     con.arseek("foo", 4711).unwrap();
 
     // Now there shoud be some proper info
-    let res = con.arinfo("foo").unwrap();
+    let res = con.arinfo("foo", false).unwrap();
     let expected = HashMap::from([
         ("count".to_string(), "2".to_string()),
         ("len".to_string(), "43".to_string()),
         ("insert-cursor".to_string(), "4711".to_string()),
     ]);
     assert_eq!(res, expected);
+}
+
+#[test]
+fn full() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Checking on an unused key
+    let res = con.arinfo("foo", true).unwrap();
+    assert_is_empty!(res);
+
+    // Set some data in the array
+    con.arset("foo", 42, "bar").unwrap();
+    con.arset("foo", 23, "baz").unwrap();
+    con.arseek("foo", 4711).unwrap();
+
+    // Now there shoud be some proper info
+    let mut res = con.arinfo("foo", true).unwrap();
+    assert_eq!(res.remove("count").unwrap(), "2");
+    assert_eq!(res.remove("len").unwrap(), "43");
+    assert_eq!(res.remove("insert-cursor").unwrap(), "4711");
+    assert_ge!(res.remove("capacity").unwrap().parse::<u32>().unwrap(), 2);
+    assert_is_empty!(res);
 }

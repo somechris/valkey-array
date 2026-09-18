@@ -11,10 +11,25 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 pub fn arinfo(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
+    let mut full = false;
 
-    err_if_further_arguments(arg_iter)?;
+    if let Some(option) = arg_iter.next() {
+        if option.to_string().to_ascii_uppercase().as_str() == "FULL" {
+            full = true;
+        } else {
+            return Err(ValkeyError::WrongArity);
+        }
 
-    let map = read_only_action!(ctx, key_name, ValkeyValue::Map(HashMap::new()), Array::info);
+        err_if_further_arguments(arg_iter)?;
+    }
+
+    let map = read_only_action!(
+        ctx,
+        key_name,
+        ValkeyValue::Map(HashMap::new()),
+        Array::info,
+        full
+    );
 
     Ok(map.into())
 }
@@ -37,9 +52,19 @@ mod tests {
     }
 
     #[test]
-    fn arity_too_high() {
+    fn arity_too_high_without_full() {
         let ctx = Context::test();
         let args = create_test_args(&["ARINFO", "foo", "bar"]);
+
+        let result = arinfo(&ctx, args);
+
+        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+    }
+
+    #[test]
+    fn arity_too_high_with_full() {
+        let ctx = Context::test();
+        let args = create_test_args(&["ARINFO", "foo", "FULL", "bar"]);
 
         let result = arinfo(&ctx, args);
 
