@@ -43,8 +43,8 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Deletes on element from the array
-    fn ardel(&mut self, key: &str, position: u64) -> RedisResult<u64> {
-        cmd("ARDEL").arg(key).arg(position).query(self)
+    fn ardel<T: ToRedisArgs>(&mut self, key: &str, positions: T) -> RedisResult<u64> {
+        cmd("ARDEL").arg(key).arg(positions).query(self)
     }
 
     /// Deletes a range of elements

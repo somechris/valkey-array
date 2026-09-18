@@ -13,24 +13,23 @@ fn faulty_calls() {
     let mut con = ctx.connection();
 
     // Too few arguments
-    let err = cmd("ARDEL")
-        .arg("foo")
-        .query::<Value>(&mut con)
-        .unwrap_err();
+    let err = cmd("ARDEL").query::<Value>(&mut con).unwrap_err();
     assert_contains!(err.to_string(), "wrong");
 
-    // Too many arguments
+    // No "too many args" check, as `ARDEL` consumes all the items that are there.
+
+    // Wrong type for first position
     let err = cmd("ARDEL")
         .arg("foo")
-        .arg(42)
         .arg("bar")
         .query::<Value>(&mut con)
         .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+    assert_contains!(err.to_string(), "integer");
 
-    // Wrong type for position
+    // Wrong type for later position
     let err = cmd("ARDEL")
         .arg("foo")
+        .arg("42")
         .arg("bar")
         .query::<Value>(&mut con)
         .unwrap_err();
@@ -61,4 +60,13 @@ fn simple() {
     // Deleting it once more
     let res = con.ardel("foo", 42).unwrap();
     assert_eq!(res, 0); // 0 as nothing got deleted
+
+    // Adding more element
+    con.arset("foo", 42, "bar").unwrap(); // will get deleted twice
+    con.arset("foo", 43, "baz").unwrap(); // will get deleted once
+    con.arset("foo", 44, "quux").unwrap(); // will not get deleted
+
+    // Deleting some again (41 is empty, 42 gets deleted twice, 43 once)
+    let res = con.ardel("foo", &[41, 42, 43, 42]).unwrap();
+    assert_eq!(res, 2); // 42 and 43 were effectively deleted
 }
