@@ -708,7 +708,7 @@ checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
 [[package]]
 name = "redis"
 version = "2.0.0-rc.1"
-source = "git+https://github.com/redis-rs/redis-rs.git?rev=f37af34be0a4b80fa95d3a412329677adee1b26b#f37af34be0a4b80fa95d3a412329677adee1b26b"
+source = "git+https://github.com/redis-rs/redis-rs.git?rev=f43d4e0cf50c10fc6b76e216c7ff6a0a55c8c3ce#f43d4e0cf50c10fc6b76e216c7ff6a0a55c8c3ce"
 dependencies = [
  "arcstr",
  "combine",
@@ -725,7 +725,7 @@ dependencies = [
 [[package]]
 name = "redis-test"
 version = "2.0.0-rc.1"
-source = "git+https://github.com/redis-rs/redis-rs.git?rev=f37af34be0a4b80fa95d3a412329677adee1b26b#f37af34be0a4b80fa95d3a412329677adee1b26b"
+source = "git+https://github.com/redis-rs/redis-rs.git?rev=f43d4e0cf50c10fc6b76e216c7ff6a0a55c8c3ce#f43d4e0cf50c10fc6b76e216c7ff6a0a55c8c3ce"
 dependencies = [
  "rand",
  "redis",

@@ -1,6 +1,7 @@
 //! Utils for integration tests
 
 use redis::{Connection, ConnectionLike, FromRedisValue, RedisResult, ToRedisArgs, cmd};
+use redis_test::server::Output;
 use redis_test::utils::CommandMultiArgs;
 use redis_test::{TestContext, TestContextBuilder};
 use std::collections::HashMap;
@@ -29,9 +30,11 @@ pub trait ValkeyArrayTestContextBuilder {
 impl ValkeyArrayTestContextBuilder for TestContextBuilder {
     fn build_for_valkey_array() -> TestContext {
         set_default_server_to_valkey();
-        TestContextBuilder::new().refine_and_build(|cmd| {
-            cmd.arg2("--loadmodule", "target/debug/libvalkey_array.so");
-        })
+        TestContextBuilder::new()
+            .panicking_drop_info_output(Output::Stdout)
+            .refine_and_build(|cmd| {
+                cmd.arg2("--loadmodule", "target/debug/libvalkey_array.so");
+            })
     }
 }
 
