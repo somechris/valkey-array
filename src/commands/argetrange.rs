@@ -1,7 +1,7 @@
 //! Implementation of the `ARGETRANGE` command
 
 use crate::Array;
-use crate::array::Range;
+use crate::array::{ArrayType, Range};
 use crate::commands::utils::{
     NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
 };

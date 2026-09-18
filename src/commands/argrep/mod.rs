@@ -3,7 +3,7 @@
 pub mod matchers;
 
 use crate::Array;
-use crate::array::Range;
+use crate::array::{ArrayType, Range};
 use crate::commands::argrep::matchers::{
     ContainsMatcher, ExactMatcher, GlobMatcher, Matcher, MatchingFn, RegexMatcher,
 };
@@ -167,6 +167,7 @@ mod tests {
     use crate::commands::argrep;
 
     use crate::Array;
+    use crate::array::ArrayType;
     use crate::commands::argrep::{SubstituteMatcher, act_on_range};
     use crate::test_utils::{u32s_to_vec_value, vkstr};
     use assertables::{assert_contains, assert_matches};

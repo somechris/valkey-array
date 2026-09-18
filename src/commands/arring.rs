@@ -1,6 +1,7 @@
 //! Implementation of the `ARRING` command
 
 use crate::Array;
+use crate::array::ArrayType;
 use crate::commands::utils::{err_if_further_arguments, read_write_creating_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};

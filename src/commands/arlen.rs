@@ -2,6 +2,7 @@
 
 use super::utils::{read_only_action, to_arg_iter};
 use crate::Array;
+use crate::array::ArrayType;
 use crate::commands::utils::err_if_further_arguments;
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};

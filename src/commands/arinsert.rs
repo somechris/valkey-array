@@ -1,6 +1,7 @@
 //! Implementation of the `ARINSERT` command
 
 use crate::Array;
+use crate::array::ArrayType;
 use crate::commands::utils::{read_write_creating_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
@@ -43,6 +44,7 @@ mod tests {
     use crate::test_utils::vkstr;
     use assertables::{assert_matches, assert_some_eq_x};
 
+    use crate::array::ArrayType;
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 

@@ -1,16 +1,12 @@
-//! The Rust implementation of Valkey arrays
+//! Array implemented by a single [`HashMap`]
 //!
-//! This gets registered in Valkey via [`crate::registration::VKARRAY`].
-
+use crate::array::ArrayType;
 use std::collections::HashMap;
 use valkey_module::ValkeyString;
 
-/// Type for position ranges
-pub type Range = (u64, u64);
-
-/// The struct that models the data in Rust
+/// Array implemented by a single [`HashMap`]
 #[derive(Default, Debug)]
-pub struct Array {
+pub struct SingleHashMapArray {
     /// The array's value as map
     values: HashMap<u64, ValkeyString>,
 
@@ -21,31 +17,27 @@ pub struct Array {
     next_highest_position: u64,
 }
 
-impl Array {
-    /// Builds a new instance
-    pub fn new() -> Self {
-        Array::default()
-    }
-
+impl SingleHashMapArray {
     /// Checks if the array is empty
     pub fn is_empty(&self) -> bool {
         self.values.is_empty()
     }
+}
+impl ArrayType for SingleHashMapArray {
+    fn new() -> Self {
+        Self::default()
+    }
 
     /// Gets the number of entries
-    pub fn count(&self) -> usize {
+    fn count(&self) -> usize {
         self.values.len()
     }
 
-    /// Gets the highest used position + 1
-    ///
-    /// If there are no entries in the array, `0` is returned
-    pub fn next_highest_position(&self) -> u64 {
+    fn next_highest_position(&self) -> u64 {
         self.next_highest_position
     }
 
-    /// Deletes the value at a given position
-    pub fn del(&mut self, position: u64) -> u64 {
+    fn del(&mut self, position: u64) -> u64 {
         let count = match self.values.remove(&position) {
             Some(_) => 1,
             None => 0,
@@ -62,19 +54,15 @@ impl Array {
         count
     }
 
-    /// Gets the value at a given position
-    pub fn get(&self, position: u64) -> Option<&ValkeyString> {
+    fn get(&self, position: u64) -> Option<&ValkeyString> {
         self.values.get(&position)
     }
 
-    /// Gets the position where the next item will get inserted
-    pub fn get_insert_cursor(&self) -> u64 {
+    fn get_insert_cursor(&self) -> u64 {
         self.insert_cursor
     }
 
-    /// Gets the value at a given position
-    // Returns an owned value instead of a reference as `ARGET` needs an owned value anyways.
-    pub fn insert(&mut self, value: ValkeyString) -> u64 {
+    fn insert(&mut self, value: ValkeyString) -> u64 {
         // Inserting the value
         let position = self.insert_cursor;
         self.set(position, value);
@@ -86,12 +74,7 @@ impl Array {
         position
     }
 
-    /// Inserts an element in ring-buffer fashion
-    ///
-    /// # Returns
-    ///
-    /// The last inserted position is returned
-    pub fn insert_ring(&mut self, buffer_size: u64, value: ValkeyString) -> u64 {
+    fn insert_ring(&mut self, buffer_size: u64, value: ValkeyString) -> u64 {
         // Bring the cursor into the expected range
         self.insert_cursor %= buffer_size;
 
@@ -104,12 +87,7 @@ impl Array {
         position
     }
 
-    /// Sets the value at a given position
-    ///
-    /// # Returns
-    ///
-    /// If the slot was previously unused, the function returns `1`. Otherwise `0`.
-    pub fn set(&mut self, position: u64, value: ValkeyString) -> usize {
+    fn set(&mut self, position: u64, value: ValkeyString) -> usize {
         self.next_highest_position = self.next_highest_position.max(position + 1);
         if self.values.insert(position, value).is_some() {
             // The position already had a value, so it's not a new slot
@@ -120,25 +98,12 @@ impl Array {
         }
     }
 
-    /// Sets the position to insert the next item
-    ///
-    /// # Returns
-    ///
-    /// 1, if setting the position worked. 0 otherwise.
-    pub fn set_insert_cursor(&mut self, position: u64) -> u64 {
+    fn set_insert_cursor(&mut self, position: u64) -> u64 {
         self.insert_cursor = position;
         1
     }
 
-    /// Collects info about the array
-    ///
-    /// # Returns
-    ///
-    /// A [`HashMap`] with the following key/values:
-    /// * `count` - number of set elements
-    /// * `len` - maximum used position + 1 (0 if the array is empty)
-    /// * `insert-cursor` - position of the insert cursor
-    pub fn info(&self) -> HashMap<&'static str, String> {
+    fn info(&self) -> HashMap<&'static str, String> {
         HashMap::from([
             ("count", self.count().to_string()),
             ("len", self.next_highest_position.to_string()),
@@ -146,60 +111,23 @@ impl Array {
         ])
     }
 
-    /// Iterates over all positions along with their values
-    pub fn iter(&self) -> impl Iterator<Item = (&u64, &ValkeyString)> {
+    fn iter(&self) -> impl Iterator<Item = (&u64, &ValkeyString)> {
         self.values.iter()
-    }
-
-    /// Iterates over all positions in an array
-    pub fn range_iter(&self, (start, end): Range) -> ArraySliceIter<'_> {
-        ArraySliceIter::new(start, end, self)
-    }
-}
-
-/// Iterator over a part of an [`Array`]
-pub struct ArraySliceIter<'a> {
-    /// The next position to get
-    next: u64,
-    /// The last position to get
-    end: u64,
-    /// The source to retrieve elements from
-    source: &'a Array,
-}
-
-impl<'a> ArraySliceIter<'a> {
-    pub fn new(mut start: u64, mut end: u64, source: &'a Array) -> Self {
-        if end < start {
-            std::mem::swap(&mut end, &mut start);
-        }
-        Self {
-            next: start,
-            end,
-            source,
-        }
-    }
-}
-impl<'a> Iterator for ArraySliceIter<'a> {
-    type Item = (u64, Option<&'a ValkeyString>);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.next > self.end {
-            return None;
-        }
-
-        let item = (self.next, self.source.get(self.next));
-        self.next += 1;
-        Some(item)
     }
 }
 
 #[cfg(test)]
 mod tests {
     mod util {
-        use crate::Array;
+        use super::SingleHashMapArray;
+        use crate::array::ArrayType;
         use crate::test_utils::vkstr;
 
-        pub fn assert_array_entry<S: Into<String>>(array: &Array, position: u64, expected: S) {
+        pub fn assert_array_entry<S: Into<String>>(
+            array: &SingleHashMapArray,
+            position: u64,
+            expected: S,
+        ) {
             let value = array
                 .get(position)
                 .unwrap_or_else(|| panic!("array should have a value at {position}"));
@@ -208,21 +136,22 @@ mod tests {
             assert_eq!(*value, expected_str, "\"{value}\" == \"{expected_str}\"");
         }
 
-        pub fn assert_array_no_entry(array: &Array, position: u64) {
+        pub fn assert_array_no_entry(array: &SingleHashMapArray, position: u64) {
             if let Some(entry) = array.get(position) {
                 panic!("array should be empty but is \"{entry}\" at {position}");
             }
         }
     }
 
-    use crate::Array;
-    use crate::array::tests::util::{assert_array_entry, assert_array_no_entry};
+    use super::SingleHashMapArray;
+    use crate::array::ArrayType;
     use crate::test_utils::vkstr;
     use std::collections::HashMap;
+    use util::{assert_array_entry, assert_array_no_entry};
 
     #[test]
     fn array_basic_get_set() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // No entries in the empty array
         assert_array_no_entry(&array, 23);
@@ -256,7 +185,7 @@ mod tests {
 
     #[test]
     fn array_del() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // Deleting an unused slot
         let deleted = array.del(42);
@@ -270,7 +199,7 @@ mod tests {
 
     #[test]
     fn array_count() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         assert_eq!(array.count(), 0);
 
@@ -283,7 +212,7 @@ mod tests {
 
     #[test]
     fn array_next_highest_position() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         assert_eq!(array.next_highest_position(), 0);
 
@@ -296,7 +225,7 @@ mod tests {
 
     #[test]
     fn array_next_highest_position_after_deletion() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         array.set(23, vkstr("baz"));
         array.set(42, vkstr("bar"));
@@ -310,7 +239,7 @@ mod tests {
 
     #[test]
     fn array_insert() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // First insert
         let res = array.insert(vkstr("foo"));
@@ -341,7 +270,7 @@ mod tests {
 
     #[test]
     fn array_insert_ring() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // We test with a ring buffer of size three. So the fourth element should overwrite the
         // first.
@@ -373,7 +302,7 @@ mod tests {
 
     #[test]
     fn array_insert_ring_initial_clamp() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // We set the insert cursor to 42
         array.set_insert_cursor(42);
@@ -392,7 +321,7 @@ mod tests {
 
     #[test]
     fn array_get_insert_cursor() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // Initial cursor on fresh Array
         let res = array.get_insert_cursor();
@@ -421,7 +350,7 @@ mod tests {
 
     #[test]
     fn array_set_insert_cursor() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // Setting the inser cursor on fresh Array
         let res = array.set_insert_cursor(42);
@@ -432,7 +361,7 @@ mod tests {
 
     #[test]
     fn array_info() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // Checking on an empty Array
         let info = array.info();
@@ -460,7 +389,7 @@ mod tests {
 
     #[test]
     fn iterator_empty_array() {
-        let array = Array::new();
+        let array = SingleHashMapArray::new();
 
         // normal range
         let items = array.range_iter((40, 42)).collect::<Vec<_>>();
@@ -469,7 +398,7 @@ mod tests {
 
     #[test]
     fn iterator_single_element_array() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
         array.set(42, vkstr("foo"));
 
         // covering range, item in the middle
@@ -499,7 +428,7 @@ mod tests {
 
     #[test]
     fn iterator_multiple_elements_array() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
         array.set(42, vkstr("foo"));
         // No element at 43
         array.set(44, vkstr("bar"));
@@ -520,7 +449,7 @@ mod tests {
     }
     #[test]
     fn is_empty() {
-        let mut array = Array::new();
+        let mut array = SingleHashMapArray::new();
 
         // It's initially empty
         assert!(array.is_empty());

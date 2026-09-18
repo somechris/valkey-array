@@ -2,7 +2,7 @@
 //!
 //! The Rust implementation for arrays is it [`crate::Array`].
 
-use crate::array::Array;
+use crate::array::{Array, ArrayType};
 use std::os::raw::{c_int, c_void};
 use std::ptr::null_mut;
 use valkey_module::error::Error;

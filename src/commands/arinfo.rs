@@ -1,6 +1,7 @@
 //! Implementation of the `ARINFO` command
 
 use crate::Array;
+use crate::array::ArrayType;
 use crate::commands::utils::{err_if_further_arguments, read_only_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use std::collections::HashMap;

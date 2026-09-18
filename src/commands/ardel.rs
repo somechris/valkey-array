@@ -1,6 +1,7 @@
 //! Implementation of the `ARDEL` command
 
 use crate::Array;
+use crate::array::ArrayType;
 use crate::commands::utils::{read_write_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
@@ -34,6 +35,7 @@ pub fn ardel(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::Array;
+    use crate::array::ArrayType;
     use crate::commands::ardel;
     use crate::commands::ardel::act_on_positions;
     use crate::test_utils::vkstr;
