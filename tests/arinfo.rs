@@ -51,6 +51,7 @@ fn simple() {
         ("count".to_string(), "2".to_string()),
         ("len".to_string(), "43".to_string()),
         ("insert-cursor".to_string(), "4711".to_string()),
+        ("type".to_string(), "SingleHashMap".to_string()),
     ]);
     assert_eq!(res, expected);
 }
@@ -74,6 +75,7 @@ fn full() {
     assert_eq!(res.remove("count").unwrap(), "2");
     assert_eq!(res.remove("len").unwrap(), "43");
     assert_eq!(res.remove("insert-cursor").unwrap(), "4711");
+    assert_eq!(res.remove("type").unwrap(), "SingleHashMap");
     assert_ge!(res.remove("capacity").unwrap().parse::<u32>().unwrap(), 2);
     assert_is_empty!(res);
 }

@@ -24,6 +24,10 @@ impl SingleHashMapArray {
     }
 }
 impl ArrayType for SingleHashMapArray {
+    fn type_name() -> &'static str {
+        "SingleHashMap"
+    }
+
     fn new() -> Self {
         Self::default()
     }
@@ -368,6 +372,7 @@ mod tests {
         // Checking on an empty Array
         let info = array.info(false);
         let expected = HashMap::from([
+            ("type", "SingleHashMap".to_string()),
             ("count", "0".to_string()),
             ("len", "0".to_string()),
             ("insert-cursor", "0".to_string()),
@@ -382,6 +387,7 @@ mod tests {
         // Checking info again
         let info = array.info(false);
         let expected = HashMap::from([
+            ("type", "SingleHashMap".to_string()),
             ("count", "2".to_string()),
             ("len", "43".to_string()),
             ("insert-cursor", "4711".to_string()),
@@ -396,6 +402,7 @@ mod tests {
         // Checking on an empty Array
         let info = array.info(true);
         let expected = HashMap::from([
+            ("type", "SingleHashMap".to_string()),
             ("count", "0".to_string()),
             ("len", "0".to_string()),
             ("insert-cursor", "0".to_string()),

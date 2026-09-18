@@ -17,6 +17,9 @@ pub type Array = single_hash_map_array::SingleHashMapArray;
 
 /// The required functions to be used as array implementation for `valkey-array`
 pub trait ArrayType: Sized {
+    /// The type to report for the array
+    fn type_name() -> &'static str;
+
     /// Builds a new instance
     fn new() -> Self;
 
@@ -101,5 +104,6 @@ pub fn collect_generic_info<ARR: ArrayType>(array: &ARR) -> HashMap<&'static str
         ("count", array.count().to_string()),
         ("len", array.next_highest_position().to_string()),
         ("insert-cursor", array.get_insert_cursor().to_string()),
+        ("type", ARR::type_name().to_string()),
     ])
 }
