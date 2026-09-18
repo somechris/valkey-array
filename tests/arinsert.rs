@@ -19,14 +19,7 @@ fn faulty_calls() {
         .unwrap_err();
     assert_contains!(err.to_string(), "wrong");
 
-    // Too many arguments
-    let err = cmd("ARINSERT")
-        .arg("foo")
-        .arg("bar")
-        .arg("baz")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+    // No "too many args" check, as `ARINSERT` consumes all the items that are there.
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
@@ -48,10 +41,13 @@ fn simple() {
     con.arset("foo", 42, "baz").unwrap();
 
     // Inserting should continue at position 1 (not 43 -- next available after last set)
-    let res = con.arinsert("foo", "quux").unwrap();
-    assert_eq!(res, 1);
+    // And we're inserting multiple items in one go.
+    let res = con.arinsert("foo", &["quux", "quuux", "quuuux"]).unwrap();
+    assert_eq!(res, 3);
 
     assert_eq!(con.arget("foo", 0).unwrap().unwrap(), "bar");
     assert_eq!(con.arget("foo", 1).unwrap().unwrap(), "quux");
+    assert_eq!(con.arget("foo", 2).unwrap().unwrap(), "quuux");
+    assert_eq!(con.arget("foo", 3).unwrap().unwrap(), "quuuux");
     assert_eq!(con.arget("foo", 42).unwrap().unwrap(), "baz");
 }

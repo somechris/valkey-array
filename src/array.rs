@@ -27,6 +27,11 @@ impl Array {
         Array::default()
     }
 
+    /// Checks if the array is empty
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
+
     /// Gets the number of entries
     pub fn count(&self) -> usize {
         self.values.len()
@@ -512,5 +517,20 @@ mod tests {
                 (46, None)
             ]
         );
+    }
+    #[test]
+    fn is_empty() {
+        let mut array = Array::new();
+
+        // It's initially empty
+        assert!(array.is_empty());
+
+        // Adding an element makes it non-empty
+        array.set(42, vkstr("foo"));
+        assert!(!array.is_empty());
+
+        // Removing the element again makes it again empty
+        array.del(42);
+        assert!(array.is_empty());
     }
 }

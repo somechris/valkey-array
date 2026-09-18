@@ -1,6 +1,6 @@
 //! Utils for integration tests
 
-use redis::{Connection, ConnectionLike, FromRedisValue, RedisResult, cmd};
+use redis::{Connection, ConnectionLike, FromRedisValue, RedisResult, ToRedisArgs, cmd};
 use redis_test::utils::CommandMultiArgs;
 use redis_test::{TestContext, TestContextBuilder};
 use std::collections::HashMap;
@@ -109,8 +109,8 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Inserts an element into the array at the insert cursor
-    fn arinsert(&mut self, key: &str, value: &str) -> RedisResult<u64> {
-        cmd("ARINSERT").arg(key).arg(value).query(self)
+    fn arinsert<T: ToRedisArgs>(&mut self, key: &str, values: T) -> RedisResult<u64> {
+        cmd("ARINSERT").arg(key).arg(values).query(self)
     }
 
     /// Number of highest allocated position + 1
