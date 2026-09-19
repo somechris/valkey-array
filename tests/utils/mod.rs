@@ -173,11 +173,16 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Inserts an element in a ring-buffer fashion
-    fn arring(&mut self, key: &str, buffer_size: u64, value: &str) -> RedisResult<u64> {
+    fn arring<T: ToRedisArgs>(
+        &mut self,
+        key: &str,
+        buffer_size: u64,
+        values: T,
+    ) -> RedisResult<u64> {
         cmd("ARRING")
             .arg(key)
             .arg(buffer_size)
-            .arg(value)
+            .arg(values)
             .query(self)
     }
 

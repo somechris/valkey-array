@@ -20,15 +20,7 @@ fn faulty_calls() {
         .unwrap_err();
     assert_contains!(err.to_string(), "wrong");
 
-    // Too many arguments
-    let err = cmd("ARRING")
-        .arg("foo")
-        .arg(42)
-        .arg("bar")
-        .arg("baz")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+    // No "too many args" check, as `ARRING` consumes all the items that are there.
 
     // Wrong type for position
     let err = cmd("ARRING")
@@ -74,4 +66,32 @@ fn simple() {
     assert_eq!(con.arget("foo", 1).unwrap().unwrap(), "baz");
     assert_eq!(con.arget("foo", 2).unwrap().unwrap(), "quux");
     assert_none!(con.arget("foo", 3).unwrap());
+}
+
+#[test]
+fn multiple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // We test with a ring buffer of size five. So it should go from position 5 back to 0.
+
+    // Add a value that will get overwritten by the below `arring`
+    con.arset("foo", 3, "value-3").unwrap();
+
+    // Set the insert cursor to not start at 0
+    con.arseek("foo", 42).unwrap(); // 42 % 5 = 2. So first ring insert is at 2.
+
+    let res = con
+        .arring("foo", 5, &["bar", "baz", "quux", "quuux"])
+        .unwrap();
+    assert_eq!(res, 0); // Last insert was at position 0
+
+    // Check array contents
+    assert_eq!(con.arget("foo", 0).unwrap().unwrap(), "quuux");
+    assert_none!(con.arget("foo", 1).unwrap());
+    assert_eq!(con.arget("foo", 2).unwrap().unwrap(), "bar");
+    assert_eq!(con.arget("foo", 3).unwrap().unwrap(), "baz");
+    assert_eq!(con.arget("foo", 4).unwrap().unwrap(), "quux");
+    assert_none!(con.arget("foo", 5).unwrap());
+    assert_none!(con.arget("foo", 6).unwrap());
 }
