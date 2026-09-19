@@ -15,20 +15,11 @@ fn faulty_calls() {
     // Too few arguments
     let err = cmd("ARSET")
         .arg("foo")
-        .arg(42)
         .query::<Value>(&mut con)
         .unwrap_err();
     assert_contains!(err.to_string(), "wrong");
 
-    // Too many arguments
-    let err = cmd("ARSET")
-        .arg("foo")
-        .arg(42)
-        .arg("bar")
-        .arg("baz")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+    // No "too many args" check, as `ARSET` consumes all the items that are there.
 
     // Wrong type for position
     let err = cmd("ARSET")
@@ -59,4 +50,22 @@ fn simple() {
     let res = con.arset("foo", 42, "baz").unwrap();
     assert_eq!(res, 0); // 0 as no new slot got added
     assert_eq!(con.arget("foo", 42).unwrap().unwrap(), "baz");
+}
+
+#[test]
+fn multiple() {
+    let ctx = TestContextBuilder::build_for_valkey_array();
+    let mut con = ctx.connection();
+
+    // Add a value that will get overwritten by the below `arset`
+    con.arset("foo", 24, "value-24").unwrap();
+
+    let res = con.arset("foo", 23, &["bar", "baz", "quux"]).unwrap();
+    assert_eq!(res, 2); // Two new slots got taken (24 was occupied before)
+
+    // Check array contents
+    assert_eq!(con.arget("foo", 23).unwrap().unwrap(), "bar");
+    assert_eq!(con.arget("foo", 24).unwrap().unwrap(), "baz");
+    assert_eq!(con.arget("foo", 25).unwrap().unwrap(), "quux");
+    assert_eq!(con.arcount("foo").unwrap(), 3);
 }

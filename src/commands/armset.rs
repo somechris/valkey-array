@@ -10,7 +10,7 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 fn act_on_pairs(array: &mut Array, pairs: Vec<(u64, ValkeyString)>) -> u64 {
     let mut count = 0;
     for (position, value) in pairs {
-        count += array.set(position, value) as u64;
+        count += array.set(position, value);
     }
     count
 }

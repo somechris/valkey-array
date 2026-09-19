@@ -66,7 +66,7 @@ pub trait ArrayType: Sized {
     /// # Returns
     ///
     /// If the slot was previously unused, the function returns `1`. Otherwise `0`.
-    fn set(&mut self, position: u64, value: ValkeyString) -> usize;
+    fn set(&mut self, position: u64, value: ValkeyString) -> u64;
 
     /// Sets the position to insert the next item
     ///

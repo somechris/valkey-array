@@ -91,7 +91,7 @@ impl ArrayType for SingleHashMapArray {
         position
     }
 
-    fn set(&mut self, position: u64, value: ValkeyString) -> usize {
+    fn set(&mut self, position: u64, value: ValkeyString) -> u64 {
         self.next_highest_position = self.next_highest_position.max(position + 1);
         if self.values.insert(position, value).is_some() {
             // The position already had a value, so it's not a new slot

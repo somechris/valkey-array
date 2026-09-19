@@ -214,8 +214,8 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Sets an element in the array
-    fn arset(&mut self, key: &str, position: u64, value: &str) -> RedisResult<u64> {
-        cmd("ARSET").arg(key).arg(position).arg(value).query(self)
+    fn arset<T: ToRedisArgs>(&mut self, key: &str, position: u64, values: T) -> RedisResult<u64> {
+        cmd("ARSET").arg(key).arg(position).arg(values).query(self)
     }
 }
 
