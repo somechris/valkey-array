@@ -2,7 +2,7 @@
 
 use crate::Array;
 use crate::array::ArrayType;
-use crate::commands::utils::{read_write_creating_action, to_arg_iter};
+use crate::commands::utils::{NextArgExtras, read_write_creating_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -25,7 +25,8 @@ fn act_on_items(
 pub fn arring(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let buffer_size = arg_iter.next_u64()?;
+    // As the buffer size is the array position where it wraps over, we parse as position
+    let buffer_size = arg_iter.next_position()?;
     // Pulling the first item already here. So, if it's missing, we bail out early, before touching
     // the key.
     let first_item = arg_iter.next_arg()?;
@@ -50,8 +51,8 @@ mod tests {
     use crate::array::ArrayType;
     use crate::commands::arring;
     use crate::commands::arring::act_on_items;
-    use crate::test_utils::vkstr;
-    use assertables::{assert_contains, assert_matches, assert_some_eq_x};
+    use crate::test_utils::{assert_position_error, vkstr};
+    use assertables::{assert_matches, assert_some_eq_x};
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 
@@ -71,9 +72,7 @@ mod tests {
         let args = create_test_args(&["ARRING", "foo", "bar", "baz"]);
 
         let result = arring(&ctx, args);
-        let err = result.expect_err("ARRING should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]

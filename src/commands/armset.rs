@@ -2,7 +2,7 @@
 
 use crate::Array;
 use crate::array::ArrayType;
-use crate::commands::utils::{read_write_action, to_arg_iter};
+use crate::commands::utils::{ValkeyStringExtras, read_write_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -23,7 +23,7 @@ pub fn armset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     // We build pairs upfront to detect arity issues before touching the array
     let mut pairs: Vec<(u64, ValkeyString)> = Vec::new();
     while let Some(position_str) = arg_iter.next() {
-        let position = position_str.parse_unsigned_integer()?;
+        let position = position_str.parse_position()?;
         let value = arg_iter.next_arg()?;
         pairs.push((position, value));
     }

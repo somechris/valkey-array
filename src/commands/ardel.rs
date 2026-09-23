@@ -2,7 +2,7 @@
 
 use crate::Array;
 use crate::array::ArrayType;
-use crate::commands::utils::{read_write_action, to_arg_iter};
+use crate::commands::utils::{ValkeyStringExtras, read_write_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -16,7 +16,7 @@ pub fn ardel(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let key_name = &arg_iter.next_arg()?;
 
     let positions = arg_iter
-        .map(|str| str.parse_unsigned_integer())
+        .map(|str| str.parse_position())
         .collect::<ValkeyResult<Vec<u64>>>()?;
 
     // No `err_if_further_arguments` as the above iteration already consumed all items
@@ -38,8 +38,8 @@ mod tests {
     use crate::array::ArrayType;
     use crate::commands::ardel;
     use crate::commands::ardel::act_on_positions;
-    use crate::test_utils::vkstr;
-    use assertables::{assert_contains, assert_some_eq_x};
+    use crate::test_utils::{assert_position_error, vkstr};
+    use assertables::assert_some_eq_x;
     use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;
 
@@ -49,9 +49,7 @@ mod tests {
         let args = create_test_args(&["ARDEL", "foo", "bar"]);
 
         let result = ardel(&ctx, args);
-        let err = result.expect_err("ARDEL should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]
@@ -60,9 +58,7 @@ mod tests {
         let args = create_test_args(&["ARDEL", "foo", "42", "bar"]);
 
         let result = ardel(&ctx, args);
-        let err = result.expect_err("ARDEL should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]

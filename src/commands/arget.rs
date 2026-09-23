@@ -2,7 +2,9 @@
 
 use crate::Array;
 use crate::array::ArrayType;
-use crate::commands::utils::{err_if_further_arguments, read_only_action, to_arg_iter};
+use crate::commands::utils::{
+    NextArgExtras, err_if_further_arguments, read_only_action, to_arg_iter,
+};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -14,7 +16,7 @@ fn retrieve(array: &Array, position: u64) -> Option<ValkeyString> {
 pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let position = arg_iter.next_u64()?;
+    let position = arg_iter.next_position()?;
 
     err_if_further_arguments(arg_iter)?;
 
@@ -26,7 +28,8 @@ pub fn arget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::arget;
-    use assertables::{assert_contains, assert_matches};
+    use crate::test_utils::assert_position_error;
+    use assertables::assert_matches;
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 
@@ -56,8 +59,6 @@ mod tests {
         let args = create_test_args(&["ARGET", "foo", "bar"]);
 
         let result = arget(&ctx, args);
-        let err = result.expect_err("ARGET should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 }

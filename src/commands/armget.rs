@@ -2,7 +2,7 @@
 
 use crate::Array;
 use crate::array::ArrayType;
-use crate::commands::utils::{read_only_action, to_arg_iter};
+use crate::commands::utils::{ValkeyStringExtras, read_only_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -11,7 +11,7 @@ fn act_on_indices(
     array: &Array,
     iter: impl Iterator<Item = ValkeyString>,
 ) -> ValkeyResult<Vec<ValkeyValue>> {
-    iter.map(|position_str| Ok(array.get(position_str.parse_unsigned_integer()?).into()))
+    iter.map(|position_str| Ok(array.get(position_str.parse_position()?).into()))
         .collect()
 }
 

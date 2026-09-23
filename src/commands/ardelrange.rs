@@ -26,7 +26,7 @@ pub fn ardelrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = arg_iter.peekable();
     let mut ranges = Vec::new();
     while arg_iter.peek().is_some() {
-        ranges.push(arg_iter.next_start_end()?);
+        ranges.push(arg_iter.next_range()?);
     }
 
     err_if_further_arguments(arg_iter)?;
@@ -48,8 +48,8 @@ mod tests {
     use crate::array::ArrayType;
     use crate::commands::ardelrange;
     use crate::commands::ardelrange::act_on_ranges;
-    use crate::test_utils::vkstr;
-    use assertables::{assert_contains, assert_matches, assert_some_eq_x};
+    use crate::test_utils::{assert_position_error, vkstr};
+    use assertables::{assert_matches, assert_some_eq_x};
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 
@@ -69,9 +69,7 @@ mod tests {
         let args = create_test_args(&["ARDELRANGE", "foo", "bar", "42"]);
 
         let result = ardelrange(&ctx, args);
-        let err = result.expect_err("ARDELRANGE should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]
@@ -80,9 +78,7 @@ mod tests {
         let args = create_test_args(&["ARDELRANGE", "foo", "23", "bar"]);
 
         let result = ardelrange(&ctx, args);
-        let err = result.expect_err("ARDELRANGE should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
     #[test]
     fn wrong_argument_type_later_start() {
@@ -90,9 +86,7 @@ mod tests {
         let args = create_test_args(&["ARDELRANGE", "foo", "23", "42", "bar", "4711"]);
 
         let result = ardelrange(&ctx, args);
-        let err = result.expect_err("ARDELRANGE should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]
@@ -101,9 +95,7 @@ mod tests {
         let args = create_test_args(&["ARDELRANGE", "foo", "23", "42", "151", "bar"]);
 
         let result = ardelrange(&ctx, args);
-        let err = result.expect_err("ARDELRANGE should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]

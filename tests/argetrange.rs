@@ -2,7 +2,7 @@
 
 pub mod utils;
 
-use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
+use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_position_error};
 use assertables::assert_contains;
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
@@ -31,22 +31,20 @@ fn faulty_calls() {
     assert_contains!(err.to_string(), "wrong");
 
     // Wrong type for start
-    let err = cmd("ARGETRANGE")
+    let result = cmd("ARGETRANGE")
         .arg("foo")
         .arg("bar")
         .arg("42")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "integer");
+        .query::<Value>(&mut con);
+    assert_position_error(result);
 
     // Wrong type for end
-    let err = cmd("ARGETRANGE")
+    let result = cmd("ARGETRANGE")
         .arg("foo")
         .arg("38")
         .arg("bar")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "integer");
+        .query::<Value>(&mut con);
+    assert_position_error(result);
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();

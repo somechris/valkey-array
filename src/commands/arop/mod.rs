@@ -64,7 +64,7 @@ fn act_on_range(array: &mut Array, range: Range, op_subst: SubstituteOperation) 
 pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let range = arg_iter.next_start_end()?;
+    let range = arg_iter.next_range()?;
 
     // Parse operation
     let op_subst = match arg_iter
@@ -102,6 +102,7 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::arop;
+    use crate::test_utils::assert_position_error;
     use assertables::{assert_contains, assert_matches};
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
@@ -132,9 +133,7 @@ mod tests {
         let args = create_test_args(&["AROP", "foo", "bar", "42", "USED"]);
 
         let result = arop(&ctx, args);
-        let err = result.expect_err("AROP should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]
@@ -143,9 +142,7 @@ mod tests {
         let args = create_test_args(&["AROP", "foo", "23", "bar", "USED"]);
 
         let result = arop(&ctx, args);
-        let err = result.expect_err("AROP should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]

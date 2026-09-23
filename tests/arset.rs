@@ -2,7 +2,7 @@
 
 pub mod utils;
 
-use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
+use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_position_error};
 use assertables::assert_contains;
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
@@ -22,13 +22,12 @@ fn faulty_calls() {
     // No "too many args" check, as `ARSET` consumes all the items that are there.
 
     // Wrong type for position
-    let err = cmd("ARSET")
+    let result = cmd("ARSET")
         .arg("foo")
         .arg("bar")
         .arg("baz")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "integer");
+        .query::<Value>(&mut con);
+    assert_position_error(result);
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();

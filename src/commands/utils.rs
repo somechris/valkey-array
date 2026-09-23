@@ -2,6 +2,9 @@
 
 use valkey_module::{ValkeyError, ValkeyResult, ValkeyString};
 
+/// Error message if a [`ValkeyString`] cannot be parsed to a position
+pub const ERR_INVALID_POSITION: &str = "invalid array position";
+
 /// Converts a command's `args` into an iterator over the relevant arguments
 macro_rules! to_arg_iter {
     ($args:expr) => {
@@ -111,6 +114,28 @@ macro_rules! read_write_creating_action {
 use crate::array::Range;
 pub(crate) use read_write_creating_action;
 
+/// Extra utilities for parsing [`ValkeyString`]s
+pub trait ValkeyStringExtras {
+    /// Parses to a position in an array
+    ///
+    /// `-` it gets translated to 0.
+    /// `+` it gets translated to the maximum value.
+    /// Otherwise, the next part gets parsed as unsigned integer.
+    fn parse_position(self) -> ValkeyResult<u64>;
+}
+
+impl ValkeyStringExtras for ValkeyString {
+    fn parse_position(self) -> ValkeyResult<u64> {
+        match &*self {
+            b"-" => Ok(0),
+            b"+" => Ok(u64::MAX),
+            _ => self
+                .parse_unsigned_integer()
+                .map_err(|_| ValkeyError::Str(ERR_INVALID_POSITION)),
+        }
+    }
+}
+
 /// Extra utilities for parsing the next arguments
 pub trait NextArgExtras {
     /// Parses a single range part
@@ -118,32 +143,28 @@ pub trait NextArgExtras {
     /// If the next part is `-` it gets translated to 0.
     /// If the next part is `+` it gets translated to the maximum value.
     /// Otherwise, the next part gets parsed as unsigned integer.
-    fn next_start_end_part(&mut self) -> ValkeyResult<u64>;
+    fn next_position(&mut self) -> ValkeyResult<u64>;
 
     /// Parses a start/end pair of arguments
     ///
-    /// See [`Self::next_start_end_part`] for the available abbreviations.
+    /// See [`Self::next_position`] for the available abbreviations.
     ///
     /// The returned pair is guaranteed that the start is not after the end.
-    fn next_start_end(&mut self) -> ValkeyResult<Range>;
+    fn next_range(&mut self) -> ValkeyResult<Range>;
 }
 
 impl<T> NextArgExtras for T
 where
     T: Iterator<Item = ValkeyString>,
 {
-    fn next_start_end_part(&mut self) -> ValkeyResult<u64> {
+    fn next_position(&mut self) -> ValkeyResult<u64> {
         self.next()
-            .map_or(Err(ValkeyError::WrongArity), |v| match &*v {
-                b"-" => Ok(0),
-                b"+" => Ok(u64::MAX),
-                _ => v.parse_unsigned_integer(),
-            })
+            .map_or(Err(ValkeyError::WrongArity), ValkeyString::parse_position)
     }
 
-    fn next_start_end(&mut self) -> ValkeyResult<Range> {
-        let mut start = self.next_start_end_part()?;
-        let mut end = self.next_start_end_part()?;
+    fn next_range(&mut self) -> ValkeyResult<Range> {
+        let mut start = self.next_position()?;
+        let mut end = self.next_position()?;
         if end < start {
             std::mem::swap(&mut end, &mut start);
         }
@@ -154,109 +175,118 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::commands::utils::NextArgExtras;
-    use crate::test_utils::vkstr;
-    use assertables::{assert_contains, assert_matches};
+    use crate::commands::utils::{NextArgExtras, ValkeyStringExtras};
+    use crate::test_utils::{assert_position_error, vkstr};
+    use assertables::assert_matches;
     use valkey_module::{ValkeyError, ValkeyString};
 
     #[test]
-    pub fn next_start_end_part() {
-        let parsed = vec![vkstr("-")].into_iter().next_start_end_part().unwrap();
+    pub fn parse_position() {
+        let parsed = vkstr("-").parse_position().unwrap();
         assert_eq!(parsed, 0);
 
-        let parsed = vec![vkstr("+")].into_iter().next_start_end_part().unwrap();
+        let parsed = vkstr("+").parse_position().unwrap();
         assert_eq!(parsed, u64::MAX);
 
-        let parsed = vec![vkstr("42")].into_iter().next_start_end_part().unwrap();
+        let parsed = vkstr("42").parse_position().unwrap();
+        assert_eq!(parsed, 42);
+
+        let result = vkstr("-1").parse_position();
+        assert_position_error(result);
+    }
+
+    #[test]
+    pub fn next_position() {
+        let parsed = vec![vkstr("-")].into_iter().next_position().unwrap();
+        assert_eq!(parsed, 0);
+
+        let parsed = vec![vkstr("+")].into_iter().next_position().unwrap();
+        assert_eq!(parsed, u64::MAX);
+
+        let parsed = vec![vkstr("42")].into_iter().next_position().unwrap();
         assert_eq!(parsed, 42);
 
         let err = Vec::<ValkeyString>::new()
             .into_iter()
-            .next_start_end_part()
+            .next_position()
             .unwrap_err();
         assert_matches!(err, ValkeyError::WrongArity);
 
-        let err = vec![vkstr("-1")]
-            .into_iter()
-            .next_start_end_part()
-            .unwrap_err();
-        assert_contains!(err.to_string(), "parse");
+        let result = vec![vkstr("-1")].into_iter().next_position();
+        assert_position_error(result);
     }
 
     #[test]
-    pub fn next_start_end() {
+    pub fn next_range() {
         // Standard range
         let parsed = vec![vkstr("23"), vkstr("42")]
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap();
         assert_eq!(parsed, (23, 42));
 
         // Standard range with max
         let parsed = vec![vkstr("23"), vkstr("+")]
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap();
         assert_eq!(parsed, (23, u64::MAX));
 
         // Standard range with min
         let parsed = vec![vkstr("-"), vkstr("42")]
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap();
         assert_eq!(parsed, (0, 42));
 
         // min / max
         let parsed = vec![vkstr("-"), vkstr("+")]
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap();
         assert_eq!(parsed, (0, u64::MAX));
 
         // Standard range reversed
         let parsed = vec![vkstr("42"), vkstr("23")]
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap();
         assert_eq!(parsed, (23, 42));
 
         // min / max
         let parsed = vec![vkstr("+"), vkstr("-")]
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap();
         assert_eq!(parsed, (0, u64::MAX));
 
         // min at end
         let parsed = vec![vkstr("23"), vkstr("-")]
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap();
         assert_eq!(parsed, (0, 23));
 
         // max at start
         let parsed = vec![vkstr("+"), vkstr("42")]
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap();
         assert_eq!(parsed, (42, u64::MAX));
 
         let err = Vec::<ValkeyString>::new()
             .into_iter()
-            .next_start_end()
+            .next_range()
             .unwrap_err();
         assert_matches!(err, ValkeyError::WrongArity);
 
-        let err = vec![vkstr("42")].into_iter().next_start_end().unwrap_err();
+        let err = vec![vkstr("42")].into_iter().next_range().unwrap_err();
         assert_matches!(err, ValkeyError::WrongArity);
 
-        let err = vec![vkstr("-1")].into_iter().next_start_end().unwrap_err();
-        assert_contains!(err.to_string(), "parse");
+        let result = vec![vkstr("-1")].into_iter().next_range();
+        assert_position_error(result);
 
-        let err = vec![vkstr("42"), vkstr("-1")]
-            .into_iter()
-            .next_start_end()
-            .unwrap_err();
-        assert_contains!(err.to_string(), "parse");
+        let result = vec![vkstr("42"), vkstr("-1")].into_iter().next_range();
+        assert_position_error(result);
     }
 }

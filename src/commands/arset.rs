@@ -2,7 +2,7 @@
 
 use crate::Array;
 use crate::array::ArrayType;
-use crate::commands::utils::{read_write_creating_action, to_arg_iter};
+use crate::commands::utils::{NextArgExtras, read_write_creating_action, to_arg_iter};
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
@@ -25,7 +25,7 @@ fn act_on_items(
 pub fn arset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let position = arg_iter.next_u64()?;
+    let position = arg_iter.next_position()?;
 
     // No `err_if_further_arguments` as `act_on_items` consumes all items
 
@@ -40,8 +40,8 @@ mod tests {
     use crate::array::ArrayType;
     use crate::commands::arset;
     use crate::commands::arset::act_on_items;
-    use crate::test_utils::vkstr;
-    use assertables::{assert_contains, assert_none, assert_some_eq_x};
+    use crate::test_utils::{assert_position_error, vkstr};
+    use assertables::{assert_none, assert_some_eq_x};
     use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;
 
@@ -51,9 +51,7 @@ mod tests {
         let args = create_test_args(&["ARSET", "foo", "bar", "baz"]);
 
         let result = arset(&ctx, args);
-        let err = result.expect_err("ARSET should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]

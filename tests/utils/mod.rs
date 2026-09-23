@@ -6,6 +6,10 @@ use redis_test::utils::CommandMultiArgs;
 use redis_test::{TestContext, TestContextBuilder};
 use std::collections::HashMap;
 
+#[path = "../../src/test_utils.rs"]
+mod test_utils;
+pub use test_utils::*;
+
 const SERVER_BIN_ENV_VAR: &str = "REDISRS_SERVER_BIN";
 
 /// If unset, sets the default server to Valkey

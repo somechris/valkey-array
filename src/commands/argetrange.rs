@@ -23,7 +23,7 @@ fn act_on_range(array: &mut Array, range: Range) -> Vec<ValkeyValue> {
 pub fn argetrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let range = arg_iter.next_start_end()?;
+    let range = arg_iter.next_range()?;
 
     err_if_further_arguments(arg_iter)?;
 
@@ -41,7 +41,8 @@ pub fn argetrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::argetrange;
-    use assertables::{assert_contains, assert_matches};
+    use crate::test_utils::assert_position_error;
+    use assertables::assert_matches;
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 
@@ -71,9 +72,7 @@ mod tests {
         let args = create_test_args(&["ARGETRANGE", "foo", "bar", "42"]);
 
         let result = argetrange(&ctx, args);
-        let err = result.expect_err("ARGETRANGE should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]
@@ -82,8 +81,6 @@ mod tests {
         let args = create_test_args(&["ARGETRANGE", "foo", "23", "bar"]);
 
         let result = argetrange(&ctx, args);
-        let err = result.expect_err("ARGETRANGE should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 }

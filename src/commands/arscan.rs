@@ -33,7 +33,7 @@ fn act_on_range(array: &mut Array, range: Range, opt_limit: Option<u64>) -> Vec<
 pub fn arscan(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let range = arg_iter.next_start_end()?;
+    let range = arg_iter.next_range()?;
     let mut opt_limit = None;
 
     // Parse optional limit
@@ -60,6 +60,7 @@ pub fn arscan(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::arscan;
+    use crate::test_utils::assert_position_error;
     use assertables::{assert_contains, assert_matches};
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
@@ -100,9 +101,7 @@ mod tests {
         let args = create_test_args(&["ARSCAN", "foo", "bar", "42"]);
 
         let result = arscan(&ctx, args);
-        let err = result.expect_err("ARSCAN should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]
@@ -111,9 +110,7 @@ mod tests {
         let args = create_test_args(&["ARSCAN", "foo", "23", "bar"]);
 
         let result = arscan(&ctx, args);
-        let err = result.expect_err("ARSCAN should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]

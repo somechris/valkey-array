@@ -4,7 +4,7 @@ extern crate core;
 
 pub mod utils;
 
-use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
+use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_position_error};
 use assertables::assert_contains;
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
@@ -37,26 +37,24 @@ fn faulty_calls() {
     assert_contains!(err.to_string(), "wrong");
 
     // Wrong type for start
-    let err = cmd("ARGREP")
+    let result = cmd("ARGREP")
         .arg("foo")
         .arg("bar")
         .arg("42")
         .arg("EXACT")
         .arg("baz")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "integer");
+        .query::<Value>(&mut con);
+    assert_position_error(result);
 
     // Wrong type for end
-    let err = cmd("ARGREP")
+    let result = cmd("ARGREP")
         .arg("foo")
         .arg("23")
         .arg("bar")
         .arg("EXACT")
         .arg("baz")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "integer");
+        .query::<Value>(&mut con);
+    assert_position_error(result);
 
     // Unknown operation
     let err = cmd("ARGREP")

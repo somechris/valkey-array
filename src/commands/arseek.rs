@@ -1,6 +1,6 @@
 //! Implementation of the `ARSEEK` command
 
-use super::utils::{read_write_action, to_arg_iter};
+use super::utils::{NextArgExtras, read_write_action, to_arg_iter};
 use crate::Array;
 use crate::array::ArrayType;
 use crate::commands::utils::err_if_further_arguments;
@@ -11,7 +11,7 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 pub fn arseek(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let position = &arg_iter.next_u64()?;
+    let position = &arg_iter.next_position()?;
 
     err_if_further_arguments(arg_iter)?;
 
@@ -29,7 +29,8 @@ pub fn arseek(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::arseek;
-    use assertables::{assert_contains, assert_matches};
+    use crate::test_utils::assert_position_error;
+    use assertables::assert_matches;
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 
@@ -59,8 +60,6 @@ mod tests {
         let args = create_test_args(&["ARSEEK", "foo", "bar"]);
 
         let result = arseek(&ctx, args);
-        let err = result.expect_err("ARSEEK should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 }

@@ -105,7 +105,7 @@ fn act_on_range(
 pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
-    let range = arg_iter.next_start_end()?;
+    let range = arg_iter.next_range()?;
     let mut opt_limit = None;
     let mut case_sensitive = true;
     let mut with_values = false;
@@ -169,8 +169,8 @@ mod tests {
     use crate::Array;
     use crate::array::ArrayType;
     use crate::commands::argrep::{SubstituteMatcher, act_on_range};
-    use crate::test_utils::{u32s_to_vec_value, vkstr};
-    use assertables::{assert_contains, assert_matches};
+    use crate::test_utils::{assert_position_error, u32s_to_vec_value, vkstr};
+    use assertables::assert_matches;
     use rstest::rstest;
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError, ValkeyValue};
@@ -265,9 +265,7 @@ mod tests {
         let args = create_test_args(&["ARGREP", "foo", "bar", "42"]);
 
         let result = argrep(&ctx, args);
-        let err = result.expect_err("ARGREP should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]
@@ -276,9 +274,7 @@ mod tests {
         let args = create_test_args(&["ARGREP", "foo", "23", "bar"]);
 
         let result = argrep(&ctx, args);
-        let err = result.expect_err("ARGREP should fail");
-
-        assert_contains!(err.to_string(), "integer");
+        assert_position_error(result);
     }
 
     #[test]
