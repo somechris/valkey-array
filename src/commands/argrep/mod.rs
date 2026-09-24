@@ -8,7 +8,7 @@ use crate::commands::argrep::matchers::{
     ContainsMatcher, ExactMatcher, GlobMatcher, Matcher, MatchingFn, RegexMatcher,
 };
 use crate::commands::utils::{
-    NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
+    NextArgExtras, err_if_further_arguments, read_only_action, to_arg_iter,
 };
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
@@ -57,7 +57,7 @@ impl SubstituteMatcher {
 
 /// Executes the command on each position in the range (inclusive)
 fn act_on_range(
-    array: &mut Array,
+    array: &Array,
     range: Range,
     matchers: Vec<SubstituteMatcher>,
     opt_limit: Option<u64>,
@@ -148,7 +148,7 @@ pub fn argrep(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
         return Err(ValkeyError::WrongArity);
     }
 
-    let items = read_write_action!(
+    let items = read_only_action!(
         ctx,
         key_name,
         ValkeyValue::Array(Vec::new()),
@@ -343,7 +343,7 @@ mod tests {
 
         // Performing the match
         let result = act_on_range(
-            &mut array,
+            &array,
             Range::new(1, 9),
             matcher_param,
             limited,
@@ -391,16 +391,8 @@ mod tests {
             SubstituteMatcher::Exact(vkstr("bar")),
             SubstituteMatcher::Exact(vkstr("quux")),
         ];
-        let result = act_on_range(
-            &mut array,
-            Range::new(0, 4),
-            matcher,
-            None,
-            true,
-            false,
-            false,
-        )
-        .unwrap();
+        let result =
+            act_on_range(&array, Range::new(0, 4), matcher, None, true, false, false).unwrap();
 
         assert_eq!(result, u32s_to_vec_value(&[0, 1, 2, 4]))
     }
@@ -423,16 +415,8 @@ mod tests {
             SubstituteMatcher::Contains(vkstr("ba")),
             SubstituteMatcher::Contains(vkstr("z")),
         ];
-        let result = act_on_range(
-            &mut array,
-            Range::new(0, 8),
-            matcher,
-            None,
-            true,
-            false,
-            true,
-        )
-        .unwrap();
+        let result =
+            act_on_range(&array, Range::new(0, 8), matcher, None, true, false, true).unwrap();
 
         assert_eq!(result, u32s_to_vec_value(&[2, 3, 4]))
     }

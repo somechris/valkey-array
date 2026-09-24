@@ -3,13 +3,13 @@
 use crate::Array;
 use crate::array::{ArrayType, Range};
 use crate::commands::utils::{
-    NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
+    NextArgExtras, err_if_further_arguments, read_only_action, to_arg_iter,
 };
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Executes the command on each position in the range (inclusive)
-fn act_on_range(array: &mut Array, range: Range) -> Vec<ValkeyValue> {
+fn act_on_range(array: &Array, range: Range) -> Vec<ValkeyValue> {
     array
         .range_iter(range)
         .map(|(_position, maybe_value)| match maybe_value {
@@ -27,7 +27,7 @@ pub fn argetrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     err_if_further_arguments(arg_iter)?;
 
-    let items = read_write_action!(
+    let items = read_only_action!(
         ctx,
         key_name,
         ValkeyValue::Array(Vec::new()),

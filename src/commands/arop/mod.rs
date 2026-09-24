@@ -6,7 +6,7 @@ use crate::Array;
 use crate::array::{ArrayType, Range};
 use crate::commands::arop::ops::Operation;
 use crate::commands::utils::{
-    NextArgExtras, err_if_further_arguments, read_write_action, to_arg_iter,
+    NextArgExtras, err_if_further_arguments, read_only_action, to_arg_iter,
 };
 use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
@@ -34,7 +34,7 @@ pub enum SubstituteOperation {
 }
 
 /// Executes the command on each position in the range (inclusive)
-fn act_on_range_typed<OP: Operation>(array: &mut Array, range: Range, mut op: OP) -> ValkeyResult {
+fn act_on_range_typed<OP: Operation>(array: &Array, range: Range, mut op: OP) -> ValkeyResult {
     for (_position, maybe_value) in array.range_iter(range) {
         if let Some(value) = maybe_value {
             op.accumulate(value);
@@ -44,7 +44,7 @@ fn act_on_range_typed<OP: Operation>(array: &mut Array, range: Range, mut op: OP
     Ok(op.build_result())
 }
 
-fn act_on_range(array: &mut Array, range: Range, op_subst: SubstituteOperation) -> ValkeyResult {
+fn act_on_range(array: &Array, range: Range, op_subst: SubstituteOperation) -> ValkeyResult {
     use SubstituteOperation::*;
     match op_subst {
         And => act_on_range_typed(array, range, ops::AndOperation::new()),
@@ -89,7 +89,7 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     err_if_further_arguments(arg_iter)?;
 
-    read_write_action!(
+    read_only_action!(
         ctx,
         key_name,
         ValkeyValue::Array(Vec::new()),
