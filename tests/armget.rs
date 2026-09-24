@@ -14,9 +14,6 @@ fn faulty_calls() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
 
-    // Bootstrapping the array
-    con.arset("foo", 1, "baz").unwrap();
-
     // Wrong type for first position
     let result = cmd("ARMGET")
         .arg("foo")

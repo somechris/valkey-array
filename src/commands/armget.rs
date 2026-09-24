@@ -7,11 +7,10 @@ use crate::registration::VKARRAY;
 use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
 
 /// Executes the command on index of the iterator
-fn act_on_indices(
-    array: &Array,
-    iter: impl Iterator<Item = ValkeyString>,
-) -> ValkeyResult<Vec<ValkeyValue>> {
-    iter.map(|position_str| Ok(array.get(position_str.parse_position()?).into()))
+fn act_on_indices(array: &Array, positions: Vec<u64>) -> ValkeyResult<Vec<ValkeyValue>> {
+    positions
+        .into_iter()
+        .map(|position| Ok(array.get(position).into()))
         .collect()
 }
 
@@ -19,13 +18,16 @@ fn act_on_indices(
 pub fn armget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
     let mut arg_iter = to_arg_iter!(args);
     let key_name = &arg_iter.next_arg()?;
+    let positions = arg_iter
+        .map(|s| s.parse_position())
+        .collect::<ValkeyResult<Vec<u64>>>()?;
 
     let items = read_only_action!(
         ctx,
         key_name,
         ValkeyValue::Array(Vec::new()),
         act_on_indices,
-        arg_iter
+        positions
     )?;
 
     Ok(ValkeyValue::Array(items))
