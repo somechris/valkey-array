@@ -4,6 +4,7 @@ pub mod utils;
 
 use crate::utils::{
     TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_position_error,
+    assert_wrong_type_error,
 };
 use assertables::assert_contains;
 use redis::{TypedCommands, Value, cmd};
@@ -62,8 +63,8 @@ fn faulty_calls() {
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
-    let err = con.arop::<Value>("bar", 38, 42, "USED").unwrap_err();
-    assert_eq!(err.code().unwrap(), "WRONGTYPE");
+    let result = con.arop::<Value>("bar", 38, 42, "USED");
+    assert_wrong_type_error(result);
 }
 
 #[test]

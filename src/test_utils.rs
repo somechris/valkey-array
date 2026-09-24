@@ -3,6 +3,7 @@
 #![allow(clippy::expect_used, reason = "This is only used in test code")]
 #![allow(clippy::panic, reason = "This is only used in test code")]
 
+use redis::RedisResult;
 use std::fmt::Debug;
 use valkey_module::{ValkeyString, ValkeyValue};
 
@@ -44,4 +45,14 @@ pub fn assert_arity_error<OK: Debug, ERR: ToString>(res: Result<OK, ERR>) {
     if !err_msg.contains("wrong") || !(err_msg.contains("arity") || err_msg.contains("number")) {
         panic!("expected arity error, got {err_msg}");
     }
+}
+
+/// Asserts that the given [`Result`] is an error about a key's value having from type
+#[allow(dead_code, reason = "This is only used in integration tests")]
+pub fn assert_wrong_type_error<OK: Debug>(res: RedisResult<OK>) {
+    let err = res.expect_err("result should fail");
+    let Some(code) = err.code() else {
+        panic!("error should have a 'code'");
+    };
+    assert_eq!(code, "WRONGTYPE");
 }
