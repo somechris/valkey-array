@@ -35,7 +35,7 @@ pub fn err_if_further_arguments(mut iter: impl Iterator) -> ValkeyResult<()> {
 ///
 /// If the key exists and is not an array, a `WRONGTYPE` error is returned
 macro_rules! read_only_action {
-    ($ctx:expr, $key_name:expr, $default:expr, $func:expr $(,$arg:expr)*) => {{
+    ($ctx:expr, $key_name:expr, $default:expr, $func:expr $(,$arg:expr)* $(,)?) => {{
         let key = $ctx.open_key($key_name);
         let Ok(maybe_array) = key.get_value::<Array>(&VKARRAY) else {
             return Err(ValkeyError::WrongType);
