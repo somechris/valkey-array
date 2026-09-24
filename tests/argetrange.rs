@@ -99,11 +99,11 @@ fn reversed() {
     assert_eq!(
         res,
         vec![
-            Some("value-38".into()),
-            Some("value-39".into()),
-            None,
+            Some("value-42".into()),
             Some("value-41".into()),
-            Some("value-42".into())
+            None,
+            Some("value-39".into()),
+            Some("value-38".into()),
         ]
     );
 }

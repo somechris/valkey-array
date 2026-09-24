@@ -98,10 +98,10 @@ fn reversed() {
     assert_eq!(
         res,
         vec![
-            (37, "value-37".to_string()),
-            (38, "value-38".to_string()),
-            (40, "value-40".to_string()),
             (42, "value-42".to_string()),
+            (40, "value-40".to_string()),
+            (38, "value-38".to_string()),
+            (37, "value-37".to_string()),
         ]
     );
 }

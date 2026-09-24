@@ -394,5 +394,5 @@ fn reverse() {
 
     // Getting from 38-42 (4 positions have a value), but start/end are reversed
     let res = con.argrep("foo", 42, 38, "EXACT", "bar").unwrap();
-    assert_eq!(res, vec![38, 41]);
+    assert_eq!(res, vec![41, 38]);
 }

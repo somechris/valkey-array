@@ -163,12 +163,8 @@ where
     }
 
     fn next_range(&mut self) -> ValkeyResult<Range> {
-        let mut start = self.next_position()?;
-        let mut end = self.next_position()?;
-        if end < start {
-            std::mem::swap(&mut end, &mut start);
-        }
-
+        let start = self.next_position()?;
+        let end = self.next_position()?;
         Ok(Range::new(start, end))
     }
 }
@@ -248,28 +244,28 @@ mod tests {
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, Range::new(23, 42));
+        assert_eq!(parsed, Range::new(42, 23));
 
-        // min / max
+        // max / min
         let parsed = vec![vkstr("+"), vkstr("-")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, Range::new(0, u64::MAX));
+        assert_eq!(parsed, Range::new(u64::MAX, 0));
 
         // min at end
         let parsed = vec![vkstr("23"), vkstr("-")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, Range::new(0, 23));
+        assert_eq!(parsed, Range::new(23, 0));
 
         // max at start
         let parsed = vec![vkstr("+"), vkstr("42")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, Range::new(42, u64::MAX));
+        assert_eq!(parsed, Range::new(u64::MAX, 42));
 
         let result = Vec::<ValkeyString>::new().into_iter().next_range();
         assert_arity_error(result);
