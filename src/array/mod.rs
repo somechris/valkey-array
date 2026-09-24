@@ -3,14 +3,14 @@
 //! This gets registered in Valkey via [`crate::registration::VKARRAY`].
 
 mod array_range_iter;
+pub mod range;
 mod single_hash_map_array;
 
 use crate::array::array_range_iter::GenericArrayRangeIter;
 use std::collections::HashMap;
 use valkey_module::ValkeyString;
 
-/// Type for position ranges
-pub type Range = (u64, u64);
+pub use range::Range;
 
 /// The actual type to hold the data stored in Valkey
 pub type Array = single_hash_map_array::SingleHashMapArray;
@@ -91,8 +91,8 @@ pub trait ArrayType: Sized {
     fn iter(&self) -> impl Iterator<Item = (&u64, &ValkeyString)>;
 
     /// Iterates over all positions in an array
-    fn range_iter(&self, (start, end): Range) -> GenericArrayRangeIter<'_, Self> {
-        GenericArrayRangeIter::new(start, end, self)
+    fn range_iter(&self, range: Range) -> GenericArrayRangeIter<'_, Self> {
+        GenericArrayRangeIter::new(range, self)
     }
 }
 

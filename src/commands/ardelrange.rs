@@ -12,8 +12,8 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 fn act_on_ranges(array: &mut Array, ranges: Vec<Range>) -> u64 {
     let mut count = 0;
 
-    for (start, end) in ranges {
-        count += (start..=end).map(|pos| array.del(pos)).sum::<u64>();
+    for range in ranges {
+        count += range.map(|pos| array.del(pos)).sum::<u64>();
     }
     count
 }
@@ -45,7 +45,7 @@ pub fn ardelrange(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::Array;
-    use crate::array::ArrayType;
+    use crate::array::{ArrayType, Range};
     use crate::commands::ardelrange;
     use crate::commands::ardelrange::act_on_ranges;
     use crate::test_utils::{assert_arity_error, assert_position_error, vkstr};
@@ -127,7 +127,7 @@ mod tests {
         array.set(43, vkstr("baz"));
         array.set(44, vkstr("quux"));
 
-        let count = act_on_ranges(&mut array, vec![(40, 43)]);
+        let count = act_on_ranges(&mut array, vec![Range::new(40, 43)]);
         assert_eq!(count, 2); // 42, and 43 was removed
         assert_some_eq_x!(array.get(23), &vkstr("foo"));
         assert_some_eq_x!(array.get(44), &vkstr("quux"));
@@ -144,7 +144,14 @@ mod tests {
         array.set(4711, vkstr("quux"));
 
         // 4711 is deleted once, 23 twice, and 151 does not exist
-        let count = act_on_ranges(&mut array, vec![(40, 42), (43, 45), (4710, 4712)]);
+        let count = act_on_ranges(
+            &mut array,
+            vec![
+                Range::new(40, 42),
+                Range::new(43, 45),
+                Range::new(4710, 4712),
+            ],
+        );
         assert_eq!(count, 4); // 42, 43, 44, and 4711 got removed
         assert_some_eq_x!(array.get(23), &vkstr("foo"));
         assert_eq!(array.count(), 1);

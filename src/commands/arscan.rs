@@ -66,7 +66,7 @@ pub fn arscan(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::Array;
-    use crate::array::ArrayType;
+    use crate::array::{ArrayType, Range};
     use crate::commands::arscan;
     use crate::commands::arscan::act_on_range;
     use crate::test_utils::{
@@ -140,7 +140,7 @@ mod tests {
         let mut array = Array::new();
 
         for limit in [None, Some(0), Some(1)] {
-            let result = act_on_range(&mut array, (23, 42), limit);
+            let result = act_on_range(&mut array, Range::new(23, 42), limit);
             assert_is_empty!(result);
         }
     }
@@ -151,15 +151,15 @@ mod tests {
         array.set(42, vkstr("foo"));
 
         // No limit
-        let result = act_on_range(&mut array, (41, 42), None);
+        let result = act_on_range(&mut array, Range::new(41, 42), None);
         assert_eq!(result, u32s_with_vals_to_vec_value(&[(42, "foo")]));
 
         // Limit to no entry
-        let result = act_on_range(&mut array, (41, 42), Some(0));
+        let result = act_on_range(&mut array, Range::new(41, 42), Some(0));
         assert_is_empty!(result);
 
         // Limit to a single entry
-        let result = act_on_range(&mut array, (41, 42), Some(1));
+        let result = act_on_range(&mut array, Range::new(41, 42), Some(1));
         assert_eq!(result, u32s_with_vals_to_vec_value(&[(42, "foo")]));
     }
 
@@ -173,18 +173,18 @@ mod tests {
         array.set(46, vkstr("quuux"));
 
         // No limit
-        let result = act_on_range(&mut array, (40, 45), None);
+        let result = act_on_range(&mut array, Range::new(40, 45), None);
         assert_eq!(
             result,
             u32s_with_vals_to_vec_value(&[(40, "bar"), (42, "baz"), (45, "quux")])
         );
 
         // Limit to no entry
-        let result = act_on_range(&mut array, (40, 45), Some(0));
+        let result = act_on_range(&mut array, Range::new(40, 45), Some(0));
         assert_is_empty!(result);
 
         // Limit to a single entry
-        let result = act_on_range(&mut array, (40, 45), Some(2));
+        let result = act_on_range(&mut array, Range::new(40, 45), Some(2));
         assert_eq!(
             result,
             u32s_with_vals_to_vec_value(&[(40, "bar"), (42, "baz")])

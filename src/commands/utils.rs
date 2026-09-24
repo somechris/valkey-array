@@ -169,12 +169,13 @@ where
             std::mem::swap(&mut end, &mut start);
         }
 
-        Ok((start, end))
+        Ok(Range::new(start, end))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::array::Range;
     use crate::commands::utils::{NextArgExtras, ValkeyStringExtras};
     use crate::test_utils::{assert_arity_error, assert_position_error, vkstr};
     use valkey_module::ValkeyString;
@@ -219,56 +220,56 @@ mod tests {
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, (23, 42));
+        assert_eq!(parsed, Range::new(23, 42));
 
         // Standard range with max
         let parsed = vec![vkstr("23"), vkstr("+")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, (23, u64::MAX));
+        assert_eq!(parsed, Range::new(23, u64::MAX));
 
         // Standard range with min
         let parsed = vec![vkstr("-"), vkstr("42")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, (0, 42));
+        assert_eq!(parsed, Range::new(0, 42));
 
         // min / max
         let parsed = vec![vkstr("-"), vkstr("+")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, (0, u64::MAX));
+        assert_eq!(parsed, Range::new(0, u64::MAX));
 
         // Standard range reversed
         let parsed = vec![vkstr("42"), vkstr("23")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, (23, 42));
+        assert_eq!(parsed, Range::new(23, 42));
 
         // min / max
         let parsed = vec![vkstr("+"), vkstr("-")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, (0, u64::MAX));
+        assert_eq!(parsed, Range::new(0, u64::MAX));
 
         // min at end
         let parsed = vec![vkstr("23"), vkstr("-")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, (0, 23));
+        assert_eq!(parsed, Range::new(0, 23));
 
         // max at start
         let parsed = vec![vkstr("+"), vkstr("42")]
             .into_iter()
             .next_range()
             .unwrap();
-        assert_eq!(parsed, (42, u64::MAX));
+        assert_eq!(parsed, Range::new(42, u64::MAX));
 
         let result = Vec::<ValkeyString>::new().into_iter().next_range();
         assert_arity_error(result);

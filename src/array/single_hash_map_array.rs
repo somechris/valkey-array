@@ -150,7 +150,7 @@ mod tests {
     }
 
     use super::SingleHashMapArray;
-    use crate::array::ArrayType;
+    use crate::array::{ArrayType, Range};
     use crate::test_utils::vkstr;
     use std::collections::HashMap;
     use util::{assert_array_entry, assert_array_no_entry};
@@ -416,7 +416,7 @@ mod tests {
         let array = SingleHashMapArray::new();
 
         // normal range
-        let items = array.range_iter((40, 42)).collect::<Vec<_>>();
+        let items = array.range_iter(Range::new(40, 42)).collect::<Vec<_>>();
         assert_eq!(items, &[(40, None), (41, None), (42, None)]);
     }
 
@@ -426,27 +426,27 @@ mod tests {
         array.set(42, vkstr("foo"));
 
         // covering range, item in the middle
-        let items = array.range_iter((41, 43)).collect::<Vec<_>>();
+        let items = array.range_iter(Range::new(41, 43)).collect::<Vec<_>>();
         assert_eq!(items, &[(41, None), (42, Some(&vkstr("foo"))), (43, None)]);
 
         // covering range, item at start
-        let items = array.range_iter((42, 44)).collect::<Vec<_>>();
+        let items = array.range_iter(Range::new(42, 44)).collect::<Vec<_>>();
         assert_eq!(items, &[(42, Some(&vkstr("foo"))), (43, None), (44, None)]);
 
         // covering range, item at end
-        let items = array.range_iter((40, 42)).collect::<Vec<_>>();
+        let items = array.range_iter(Range::new(40, 42)).collect::<Vec<_>>();
         assert_eq!(items, &[(40, None), (41, None), (42, Some(&vkstr("foo")))]);
 
         // range before item
-        let items = array.range_iter((39, 41)).collect::<Vec<_>>();
+        let items = array.range_iter(Range::new(39, 41)).collect::<Vec<_>>();
         assert_eq!(items, &[(39, None), (40, None), (41, None)]);
 
         // range after item
-        let items = array.range_iter((43, 45)).collect::<Vec<_>>();
+        let items = array.range_iter(Range::new(43, 45)).collect::<Vec<_>>();
         assert_eq!(items, &[(43, None), (44, None), (45, None)]);
 
         // range is item
-        let items = array.range_iter((42, 42)).collect::<Vec<_>>();
+        let items = array.range_iter(Range::new(42, 42)).collect::<Vec<_>>();
         assert_eq!(items, &[(42, Some(&vkstr("foo")))]);
     }
 
@@ -458,7 +458,7 @@ mod tests {
         array.set(44, vkstr("bar"));
         array.set(45, vkstr("baz"));
 
-        let items = array.range_iter((41, 46)).collect::<Vec<_>>();
+        let items = array.range_iter(Range::new(41, 46)).collect::<Vec<_>>();
         assert_eq!(
             items,
             &[

@@ -170,7 +170,7 @@ mod tests {
     use crate::commands::argrep;
 
     use crate::Array;
-    use crate::array::ArrayType;
+    use crate::array::{ArrayType, Range};
     use crate::commands::argrep::{SubstituteMatcher, act_on_range};
     use crate::test_utils::{assert_arity_error, assert_position_error, u32s_to_vec_value, vkstr};
 
@@ -344,7 +344,7 @@ mod tests {
         // Performing the match
         let result = act_on_range(
             &mut array,
-            (1, 9),
+            Range::new(1, 9),
             matcher_param,
             limited,
             case_sensitivity_param,
@@ -391,7 +391,16 @@ mod tests {
             SubstituteMatcher::Exact(vkstr("bar")),
             SubstituteMatcher::Exact(vkstr("quux")),
         ];
-        let result = act_on_range(&mut array, (0, 4), matcher, None, true, false, false).unwrap();
+        let result = act_on_range(
+            &mut array,
+            Range::new(0, 4),
+            matcher,
+            None,
+            true,
+            false,
+            false,
+        )
+        .unwrap();
 
         assert_eq!(result, u32s_to_vec_value(&[0, 1, 2, 4]))
     }
@@ -414,7 +423,16 @@ mod tests {
             SubstituteMatcher::Contains(vkstr("ba")),
             SubstituteMatcher::Contains(vkstr("z")),
         ];
-        let result = act_on_range(&mut array, (0, 8), matcher, None, true, false, true).unwrap();
+        let result = act_on_range(
+            &mut array,
+            Range::new(0, 8),
+            matcher,
+            None,
+            true,
+            false,
+            true,
+        )
+        .unwrap();
 
         assert_eq!(result, u32s_to_vec_value(&[2, 3, 4]))
     }
