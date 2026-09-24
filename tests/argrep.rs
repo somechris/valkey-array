@@ -181,7 +181,7 @@ fn glob_case_sensitive() {
     con.arset("foo", 44, "foobar").unwrap(); // ignored (not in range)
 
     // Getting from 38-43 (5 positions have a value)
-    let res = con.argrep("foo", 38, 43, "GLOB", "fo*b").unwrap();
+    let res = con.argrep("foo", 38, 43, "GLOB", "fo*b*").unwrap();
     assert_eq!(res, vec![38, 39, 41]);
 }
 
@@ -202,7 +202,7 @@ fn glob_case_insensitive() {
 
     // Getting from 38-43 (5 positions have a value)
     let res: Vec<i64> = con
-        .argrep_ex("foo", 38, 43, &[("GLOB", "fo*b")], &["NOCASE"])
+        .argrep_ex("foo", 38, 43, &[("GLOB", "fo*b*")], &["NOCASE"])
         .unwrap();
     assert_eq!(res, vec![38, 39, 41, 42]);
 }

@@ -4,19 +4,12 @@ use valkey_module::{ValkeyResult, ValkeyString};
 
 /// [`Matcher`] that matches only iff the candidate matches the gives glob
 pub struct GlobMatcher {
-    search_expr: Vec<u8>,
+    search_expr: ValkeyString,
 }
 
 impl GlobMatcher {
     /// Builds a new matcher for the given search expression
-    pub fn new(search_expr_raw: ValkeyString) -> Self {
-        // Valkey checks globs as if they end in a `*`. `fast_glob` does not.
-        // So we add a `*` it if necessary.
-        let mut search_expr = search_expr_raw.to_vec();
-        if !search_expr.ends_with("*".as_bytes()) {
-            search_expr.push(0x2a); // Appending '*'
-        }
-
+    pub fn new(search_expr: ValkeyString) -> Self {
         Self { search_expr }
     }
 }
@@ -24,12 +17,12 @@ impl Matcher for GlobMatcher {
     fn get_matcher_func_case_sensitive(self) -> ValkeyResult<MatchingFn> {
         let search_expr = self.search_expr;
         Ok(Box::new(move |candidate| {
-            fast_glob::glob_match(&search_expr, &**candidate)
+            fast_glob::glob_match(&*search_expr, &**candidate)
         }))
     }
 
     fn get_matcher_func_case_insensitive(self) -> ValkeyResult<MatchingFn> {
-        let search_expr = self.search_expr;
+        let search_expr = ascii_lower_case(&self.search_expr);
         Ok(Box::new(move |candidate| {
             fast_glob::glob_match(&search_expr, ascii_lower_case(candidate))
         }))
@@ -42,82 +35,56 @@ mod tests {
     use crate::test_utils::vkstr;
 
     #[test]
-    fn sensitive_with_lowercase_glob() {
-        let expr = "f*o";
-        let match_fn = GlobMatcher::new(vkstr(expr))
-            .get_matcher_func_case_sensitive()
-            .unwrap();
+    fn sensitive() {
+        fn check(text: &str, glob: &str) -> bool {
+            GlobMatcher::new(vkstr(glob))
+                .get_matcher_func_case_sensitive()
+                .unwrap()(&vkstr(text))
+        }
 
-        assert!(match_fn(&vkstr("fo"))); // `*` is empty
-        assert!(match_fn(&vkstr("fao"))); // `*` is single character
-        assert!(match_fn(&vkstr("f o"))); // `*` is whitespace
-        assert!(match_fn(&vkstr("faBCdeo"))); // `*` is multiple characters
-        assert!(match_fn(&vkstr("foo bar"))); // end is not anchored
+        assert!(check("foo", "foo")); // Full match
+        assert!(check("foo", "*o")); // Wildcard start
+        assert!(check("foo", "f*")); // Wildcard end
+        assert!(check("foo", "*f*")); // Wildcard anchoring
+        assert!(check("fOO", "f[A-Z]O*")); // Mixed case
+        assert!(check("föo", "föo")); // non-ASCII exact
+        assert!(check("föo", "f*o")); // non-ASCII wildcard
 
-        assert!(!match_fn(&vkstr(" foo"))); // start is anchored
-        assert!(!match_fn(&vkstr("FO"))); // different case
-        assert!(!match_fn(&vkstr("faa"))); // `o` is missing
-        assert!(!match_fn(&vkstr("boo"))); // `f` is missing
+        assert!(!check("foo", "o")); // Only middle, no start/end match
+        assert!(!check("foo", "fo")); // No end match
+        assert!(!check("foo", "oo")); // No start match
+        assert!(!check("foo", "*oO")); // case mismatch, glob upper case
+        assert!(!check("foO", "*oo")); // case mismatch, text upper case
+        assert!(!check("föo", "foo")); // non-ASCII text mismatch
+        assert!(!check("foo", "föo")); // non-ASCII glob mismatch
+        assert!(!check("föo", "fÖ*")); // non-ASCII case mismatch, glob upper case
+        assert!(!check("fÖo", "fö*")); // non-ASCII case mismatch, text upper case
     }
 
     #[test]
-    fn sensitive_with_mixed_glob() {
-        let expr = "f*O";
-        let match_fn = GlobMatcher::new(vkstr(expr))
-            .get_matcher_func_case_sensitive()
-            .unwrap();
+    fn insensitive() {
+        fn check(text: &str, glob: &str) -> bool {
+            GlobMatcher::new(vkstr(glob))
+                .get_matcher_func_case_insensitive()
+                .unwrap()(&vkstr(text))
+        }
 
-        assert!(match_fn(&vkstr("fO"))); // `*` is empty
-        assert!(match_fn(&vkstr("faO"))); // `*` is single character
-        assert!(match_fn(&vkstr("f O"))); // `*` is whitespace
-        assert!(match_fn(&vkstr("faBCdeO"))); // `*` is multiple characters
-        assert!(match_fn(&vkstr("foO bar"))); // end is not anchored
+        assert!(check("foo", "foo")); // Full match
+        assert!(check("foo", "*o")); // Wildcard start
+        assert!(check("foo", "f*")); // Wildcard end
+        assert!(check("foo", "*f*")); // Wildcard anchoring
+        assert!(check("fOO", "f[A-Z]O*")); // Mixed case
+        assert!(check("föo", "föo")); // non-ASCII exact
+        assert!(check("föo", "f*o")); // non-ASCII wildcard
+        assert!(check("foo", "*oO")); // case mismatch, glob upper case
+        assert!(check("foO", "*oo")); // case mismatch, text upper case
 
-        assert!(!match_fn(&vkstr(" foO"))); // start is anchored
-        assert!(!match_fn(&vkstr("FO"))); // different case
-        assert!(!match_fn(&vkstr("foo"))); // different case
-        assert!(!match_fn(&vkstr("faa"))); // `o` is missing
-        assert!(!match_fn(&vkstr("boo"))); // `f` is missing
-    }
-
-    #[test]
-    fn insensitive_with_lowercase_glob() {
-        let expr = "f*o";
-        let match_fn = GlobMatcher::new(vkstr(expr))
-            .get_matcher_func_case_insensitive()
-            .unwrap();
-
-        assert!(match_fn(&vkstr("fo"))); // `*` is empty
-        assert!(match_fn(&vkstr("fao"))); // `*` is single character
-        assert!(match_fn(&vkstr("f o"))); // `*` is whitespace
-        assert!(match_fn(&vkstr("faBCdeo"))); // `*` is multiple characters
-        assert!(match_fn(&vkstr("foo bar"))); // end is not anchored
-        assert!(match_fn(&vkstr("FO"))); // different case
-
-        assert!(!match_fn(&vkstr(" foo"))); // start is anchored
-        assert!(!match_fn(&vkstr("faa"))); // `o` is missing
-        assert!(!match_fn(&vkstr("boo"))); // `f` is missing
-    }
-
-    #[test]
-    fn insensitive_with_mixed_glob() {
-        let expr = "f*O";
-        let match_fn = GlobMatcher::new(vkstr(expr))
-            .get_matcher_func_case_insensitive()
-            .unwrap();
-
-        assert!(!match_fn(&vkstr("fabco"))); // all lowercase
-        assert!(!match_fn(&vkstr("fabcO"))); // lowercase and uppercase
-        assert!(!match_fn(&vkstr("Fabco"))); // uppercase and lowercase
-        assert!(!match_fn(&vkstr("FabcO"))); // all uppercase
-        assert!(!match_fn(&vkstr("fao"))); // `*` is single character
-        assert!(!match_fn(&vkstr("f o"))); // `*` is whitespace
-        assert!(!match_fn(&vkstr("faBCdeo"))); // `*` is multiple characters
-        assert!(!match_fn(&vkstr("foo bar"))); // end is not anchored
-        assert!(!match_fn(&vkstr("FO"))); // different case
-
-        assert!(!match_fn(&vkstr(" foo"))); // start is anchored
-        assert!(!match_fn(&vkstr("faa"))); // `o` is missing
-        assert!(!match_fn(&vkstr("boo"))); // `f` is missing
+        assert!(!check("foo", "o")); // Only middle, no start/end match
+        assert!(!check("foo", "fo")); // No end match
+        assert!(!check("foo", "oo")); // No start match
+        assert!(!check("föo", "foo")); // non-ASCII text mismatch
+        assert!(!check("foo", "föo")); // non-ASCII glob mismatch
+        assert!(!check("föo", "fÖ*")); // non-ASCII case mismatch, glob upper case
+        assert!(!check("fÖo", "fö*")); // non-ASCII case mismatch, text upper case
     }
 }

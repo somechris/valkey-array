@@ -23,12 +23,9 @@ pub enum SubstituteMatcher {
 
     /// Matches iff the found item is matched by the given glob
     ///
-    /// The glob is anchored at the beginning, but not at the end.
+    /// The glob is anchored at the beginning, and at the end.
     ///
-    /// To match Valkey's glob matching, the glob gets a `*` get appended if it's not there yet.
-    ///
-    /// For the same reason, case-insensitive matching only converts the found items' ASCII upper
-    /// case characters to lower case and matches the glob as given.
+    /// Case-insensitivity applies only for ASCII characters.
     Glob(ValkeyString),
 
     /// Matches iff the found item is matched by the given regular expression
@@ -292,7 +289,7 @@ mod tests {
     #[case::contains_sensitive("Contains", "Oo", "sensitive", &[2, 4])]
     #[case::contains_insensitive("Contains", "Oo", "insensitive", &[1, 2, 3, 4])]
     #[case::glob_sensitive("Glob", "f[O]*", "sensitive", &[2])]
-    #[case::glob_insensitive("Glob", "f[O]*", "insensitive", &[])]
+    #[case::glob_insensitive("Glob", "f[O]*", "insensitive", &[1, 2, 3, 4])]
     #[case::glob_sensitive_lc("Glob", "f[o]*", "sensitive", &[1])]
     #[case::glob_insensitive_lc("Glob", "f[o]*", "insensitive", &[1, 2, 3, 4])]
     #[case::regex_sensitive("Regex", "fO+", "sensitive", &[2])]
