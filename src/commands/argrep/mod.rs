@@ -66,7 +66,13 @@ fn act_on_range(
     conjunctive: bool,
 ) -> ValkeyResult<Vec<ValkeyValue>> {
     let (limited, limit) = match opt_limit {
-        Some(limit) => (true, limit as usize),
+        Some(limit) => {
+            if limit == 0 {
+                // Nothing to do
+                return Ok(vec![]);
+            }
+            (true, limit as usize)
+        }
         None => (false, 0),
     };
 
@@ -301,7 +307,7 @@ mod tests {
         #[case] expr: &str,
         #[case] case_sensitivity: &str,
         #[case] expected_idxs_from_1_to_4: &[i32],
-        #[values(true, false)] limited: bool,
+        #[values(None, Some(0), Some(1))] limited: Option<u64>,
         #[values(true, false)] with_values: bool,
     ) {
         let values = [
@@ -334,14 +340,13 @@ mod tests {
             _ => panic!("Unknown matcher: {matcher}"),
         }];
         let case_sensitivity_param = !case_sensitivity.starts_with("in");
-        let limited_param = if limited { Some(1) } else { None };
 
         // Performing the match
         let result = act_on_range(
             &mut array,
             (1, 9),
             matcher_param,
-            limited_param,
+            limited,
             case_sensitivity_param,
             with_values,
             false,
@@ -364,8 +369,8 @@ mod tests {
         } else {
             idx_iter.map(|x| (x as i64).into()).collect()
         };
-        if limited {
-            expected.truncate(1);
+        if let Some(limit) = limited {
+            expected.truncate(limit as usize);
         }
 
         // And finally, the check

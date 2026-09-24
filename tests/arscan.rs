@@ -3,7 +3,7 @@
 pub mod utils;
 
 use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_position_error};
-use assertables::assert_contains;
+use assertables::{assert_contains, assert_is_empty};
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
 
@@ -123,7 +123,11 @@ fn limited() {
     con.arset("foo", 42, "value-42").unwrap();
     con.arset("foo", 43, "value-43").unwrap();
 
-    // Getting from 23-42 (inclusive)
+    // Getting from 23-42 (inclusive), limit 0
+    let res = con.arscan_limited("foo", 23, 42, 0).unwrap();
+    assert_is_empty!(res);
+
+    // Getting from 23-42 (inclusive), limit 3
     let res = con.arscan_limited("foo", 23, 42, 3).unwrap();
     assert_eq!(
         res,

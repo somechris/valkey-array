@@ -11,7 +11,13 @@ use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, V
 /// Executes the command on each position in the range (inclusive)
 fn act_on_range(array: &mut Array, range: Range, opt_limit: Option<u64>) -> Vec<ValkeyValue> {
     let (limited, limit) = match opt_limit {
-        Some(limit) => (true, limit as usize),
+        Some(limit) => {
+            if limit == 0 {
+                // Nothing to do
+                return vec![];
+            }
+            (true, limit as usize)
+        }
         None => (false, 0),
     };
 
@@ -59,9 +65,12 @@ pub fn arscan(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
 #[cfg(test)]
 mod tests {
+    use crate::Array;
+    use crate::array::ArrayType;
     use crate::commands::arscan;
-    use crate::test_utils::assert_position_error;
-    use assertables::{assert_contains, assert_matches};
+    use crate::commands::arscan::act_on_range;
+    use crate::test_utils::{assert_position_error, u32s_with_vals_to_vec_value, vkstr};
+    use assertables::{assert_contains, assert_is_empty, assert_matches};
     use valkey_module::test_shims::create_test_args;
     use valkey_module::{Context, ValkeyError};
 
@@ -122,5 +131,61 @@ mod tests {
         let err = result.expect_err("ARSCAN should fail");
 
         assert_contains!(err.to_string(), "integer");
+    }
+
+    #[test]
+    fn act_on_range_only_empty_positions() {
+        let mut array = Array::new();
+
+        for limit in [None, Some(0), Some(1)] {
+            let result = act_on_range(&mut array, (23, 42), limit);
+            assert_is_empty!(result);
+        }
+    }
+
+    #[test]
+    fn act_on_range_single_position() {
+        let mut array = Array::new();
+        array.set(42, vkstr("foo"));
+
+        // No limit
+        let result = act_on_range(&mut array, (41, 42), None);
+        assert_eq!(result, u32s_with_vals_to_vec_value(&[(42, "foo")]));
+
+        // Limit to no entry
+        let result = act_on_range(&mut array, (41, 42), Some(0));
+        assert_is_empty!(result);
+
+        // Limit to a single entry
+        let result = act_on_range(&mut array, (41, 42), Some(1));
+        assert_eq!(result, u32s_with_vals_to_vec_value(&[(42, "foo")]));
+    }
+
+    #[test]
+    fn act_on_range_multiple_positions() {
+        let mut array = Array::new();
+        array.set(39, vkstr("foo"));
+        array.set(40, vkstr("bar"));
+        array.set(42, vkstr("baz"));
+        array.set(45, vkstr("quux"));
+        array.set(46, vkstr("quuux"));
+
+        // No limit
+        let result = act_on_range(&mut array, (40, 45), None);
+        assert_eq!(
+            result,
+            u32s_with_vals_to_vec_value(&[(40, "bar"), (42, "baz"), (45, "quux")])
+        );
+
+        // Limit to no entry
+        let result = act_on_range(&mut array, (40, 45), Some(0));
+        assert_is_empty!(result);
+
+        // Limit to a single entry
+        let result = act_on_range(&mut array, (40, 45), Some(2));
+        assert_eq!(
+            result,
+            u32s_with_vals_to_vec_value(&[(40, "bar"), (42, "baz")])
+        );
     }
 }
