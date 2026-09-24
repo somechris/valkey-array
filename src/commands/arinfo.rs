@@ -4,8 +4,7 @@ use crate::Array;
 use crate::array::ArrayType;
 use crate::commands::utils::{err_if_further_arguments, read_only_action, to_arg_iter};
 use crate::registration::VKARRAY;
-use std::collections::HashMap;
-use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
+use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString};
 
 /// Implements the `ARINFO` command
 pub fn arinfo(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {

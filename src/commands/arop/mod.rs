@@ -9,7 +9,7 @@ use crate::commands::utils::{
     NextArgExtras, err_if_further_arguments, read_only_action, to_arg_iter,
 };
 use crate::registration::VKARRAY;
-use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString, ValkeyValue};
+use valkey_module::{Context, NextArg, ValkeyError, ValkeyResult, ValkeyString};
 
 /// Substitutes for available operations
 ///

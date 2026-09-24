@@ -6,7 +6,7 @@ pub mod utils;
 
 use crate::utils::{
     TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_position_error,
-    assert_wrong_type_error,
+    assert_unused_key_error, assert_wrong_type_error,
 };
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
@@ -64,6 +64,10 @@ fn faulty_calls() {
         .arg("BAZ")
         .query::<Value>(&mut con);
     assert_arity_error(result);
+
+    // Operating on unused key
+    let result = con.argrep("foo", 38, 42, "EXACT", "baz");
+    assert_unused_key_error(result);
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();

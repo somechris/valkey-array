@@ -4,7 +4,7 @@ pub mod utils;
 
 use crate::utils::{
     TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_position_error,
-    assert_wrong_type_error,
+    assert_unused_key_error, assert_wrong_type_error,
 };
 use assertables::{assert_none, assert_some_eq_x};
 use redis::{TypedCommands, Value, cmd};
@@ -31,6 +31,10 @@ fn faulty_calls() {
     let result = cmd("ARGET").arg("foo").arg("bar").query::<Value>(&mut con);
     assert_position_error(result);
 
+    // Getting from an unused key
+    let result = con.arget("foo", 42);
+    assert_unused_key_error(result);
+
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
     let result = con.arget("bar", 23);
@@ -41,10 +45,6 @@ fn faulty_calls() {
 fn simple() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
-
-    // Getting from an unused key
-    let res = con.arget("foo", 42).unwrap();
-    assert_none!(res);
 
     // Adding an element
     con.arset("foo", 42, "bar").unwrap();

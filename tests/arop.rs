@@ -4,7 +4,7 @@ pub mod utils;
 
 use crate::utils::{
     TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_position_error,
-    assert_wrong_type_error,
+    assert_unused_key_error, assert_wrong_type_error,
 };
 use assertables::assert_contains;
 use redis::{TypedCommands, Value, cmd};
@@ -60,6 +60,10 @@ fn faulty_calls() {
         .query::<Value>(&mut con)
         .unwrap_err();
     assert_contains!(err.to_string(), "operation");
+
+    // Against unused key
+    let result = con.arop::<Value>("foo", 38, 42, "USED");
+    assert_unused_key_error(result);
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();

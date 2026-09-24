@@ -56,3 +56,13 @@ pub fn assert_wrong_type_error<OK: Debug>(res: RedisResult<OK>) {
     };
     assert_eq!(code, "WRONGTYPE");
 }
+
+/// Asserts that the given [`Result`] is an error about an unused key
+#[allow(dead_code, reason = "This is only used in integration tests")]
+pub fn assert_unused_key_error<OK: Debug>(res: RedisResult<OK>) {
+    let err = res.expect_err("result should fail");
+    let err_msg = err.to_string().to_ascii_lowercase();
+    if !err_msg.contains("unused") || !err_msg.contains("key") {
+        panic!("expected unused key error, got {err_msg}");
+    }
+}

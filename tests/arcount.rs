@@ -3,7 +3,8 @@
 pub mod utils;
 
 use crate::utils::{
-    TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_wrong_type_error,
+    TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_unused_key_error,
+    assert_wrong_type_error,
 };
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
@@ -24,6 +25,10 @@ fn faulty_calls() {
         .query::<Value>(&mut con);
     assert_arity_error(result);
 
+    // Checking on an unused key
+    let result = con.arcount("foo");
+    assert_unused_key_error(result);
+
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
     let result = con.arcount("bar");
@@ -34,10 +39,6 @@ fn faulty_calls() {
 fn simple() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
-
-    // Checking on an unused key
-    let res = con.arcount("foo").unwrap();
-    assert_eq!(res, 0);
 
     // Adding an element
     con.arset("foo", 42, "bar").unwrap();

@@ -5,6 +5,9 @@ use valkey_module::{ValkeyError, ValkeyResult, ValkeyString};
 /// Error message if a [`ValkeyString`] cannot be parsed to a position
 pub const ERR_INVALID_POSITION: &str = "invalid array position";
 
+/// Error message when trying to read from an empty key
+pub const ERR_UNUSED_KEY: &str = "unused key";
+
 /// Converts a command's `args` into an iterator over the relevant arguments
 macro_rules! to_arg_iter {
     ($args:expr) => {
@@ -42,7 +45,7 @@ macro_rules! read_only_action {
         };
 
         let Some(array) = maybe_array else {
-            return Ok($default);
+            return Err(ValkeyError::Str(crate::commands::utils::ERR_UNUSED_KEY));
         };
 
         $func(array$(, $arg)*)

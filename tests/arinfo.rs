@@ -3,7 +3,8 @@
 pub mod utils;
 
 use crate::utils::{
-    TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_wrong_type_error,
+    TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_unused_key_error,
+    assert_wrong_type_error,
 };
 use assertables::{assert_ge, assert_is_empty};
 use redis::{TypedCommands, Value, cmd};
@@ -23,6 +24,10 @@ fn faulty_calls() {
     let result = cmd("ARINFO").arg("foo").arg("bar").query::<Value>(&mut con);
     assert_arity_error(result);
 
+    // Checking on an unused key
+    let result = con.arinfo("foo", true);
+    assert_unused_key_error(result);
+
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
     let result = con.arinfo("bar", false);
@@ -33,10 +38,6 @@ fn faulty_calls() {
 fn simple() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
-
-    // Checking on an unused key
-    let res = con.arinfo("foo", false).unwrap();
-    assert_is_empty!(res);
 
     // Set some data in the array
     con.arset("foo", 42, "bar").unwrap();
@@ -58,10 +59,6 @@ fn simple() {
 fn full() {
     let ctx = TestContextBuilder::build_for_valkey_array();
     let mut con = ctx.connection();
-
-    // Checking on an unused key
-    let res = con.arinfo("foo", true).unwrap();
-    assert_is_empty!(res);
 
     // Set some data in the array
     con.arset("foo", 42, "bar").unwrap();
