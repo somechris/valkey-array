@@ -29,6 +29,29 @@ pub fn u32s_with_vals_to_vec_value(items: &[(i32, &'static str)]) -> Vec<ValkeyV
         .collect()
 }
 
+/// Exits a test with a reason
+#[allow(unused_macros, reason = "Not used in each test")]
+macro_rules! skip_test {
+    ($reason:expr) => {
+        eprintln!("Test skipped: {}", $reason);
+        return;
+    };
+}
+#[allow(unused_imports, reason = "Not used in each test")]
+pub(crate) use skip_test;
+
+/// Exits a test with a reason, if a condition is met
+#[allow(unused_macros, reason = "Not used in each test")]
+macro_rules! skip_test_if {
+    ($condition:expr, $reason:expr) => {
+        if $condition {
+            $crate::utils::skip_test!($reason);
+        }
+    };
+}
+#[allow(unused_imports, reason = "Not used in each test")]
+pub(crate) use skip_test_if;
+
 /// Asserts that the given [`Result`] is a position error
 pub fn assert_position_error<OK: Debug, ERR: ToString>(res: Result<OK, ERR>) {
     let err = res.expect_err("position should fail");
