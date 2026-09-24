@@ -41,12 +41,12 @@ mod tests {
     use crate::Array;
     use crate::commands::arinsert;
     use crate::commands::arinsert::act_on_items;
-    use crate::test_utils::vkstr;
-    use assertables::{assert_matches, assert_some_eq_x};
+    use crate::test_utils::{assert_arity_error, vkstr};
+    use assertables::assert_some_eq_x;
 
     use crate::array::ArrayType;
+    use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;
-    use valkey_module::{Context, ValkeyError};
 
     #[test]
     fn arity_too_low() {
@@ -55,7 +55,7 @@ mod tests {
 
         let result = arinsert(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]

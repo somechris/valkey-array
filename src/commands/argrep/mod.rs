@@ -172,11 +172,11 @@ mod tests {
     use crate::Array;
     use crate::array::ArrayType;
     use crate::commands::argrep::{SubstituteMatcher, act_on_range};
-    use crate::test_utils::{assert_position_error, u32s_to_vec_value, vkstr};
-    use assertables::assert_matches;
+    use crate::test_utils::{assert_arity_error, assert_position_error, u32s_to_vec_value, vkstr};
+
     use rstest::rstest;
     use valkey_module::test_shims::create_test_args;
-    use valkey_module::{Context, ValkeyError, ValkeyValue};
+    use valkey_module::{Context, ValkeyValue};
 
     #[test]
     fn arity_too_low() {
@@ -185,7 +185,7 @@ mod tests {
 
         let result = argrep(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -195,7 +195,7 @@ mod tests {
 
         let result = argrep(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -207,7 +207,7 @@ mod tests {
 
         let result = argrep(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -218,7 +218,7 @@ mod tests {
 
         let result = argrep(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -237,7 +237,7 @@ mod tests {
 
         let result = argrep(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -259,7 +259,7 @@ mod tests {
 
         let result = argrep(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -286,7 +286,7 @@ mod tests {
         let args = create_test_args(&["ARGREP", "foo", "23", "42", "bar"]);
 
         let result = argrep(&ctx, args);
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[rstest]

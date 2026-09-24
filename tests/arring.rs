@@ -2,8 +2,10 @@
 
 pub mod utils;
 
-use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_position_error};
-use assertables::{assert_contains, assert_none};
+use crate::utils::{
+    TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_position_error,
+};
+use assertables::assert_none;
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
 
@@ -13,12 +15,8 @@ fn faulty_calls() {
     let mut con = ctx.connection();
 
     // Too few arguments
-    let err = cmd("ARRING")
-        .arg("foo")
-        .arg(42)
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+    let result = cmd("ARRING").arg("foo").arg(42).query::<Value>(&mut con);
+    assert_arity_error(result);
 
     // No "too many args" check, as `ARRING` consumes all the items that are there.
 

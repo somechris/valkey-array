@@ -42,9 +42,10 @@ pub fn armset(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::armset;
-    use assertables::assert_matches;
+    use crate::test_utils::assert_arity_error;
+
+    use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;
-    use valkey_module::{Context, ValkeyError};
 
     #[test]
     fn arity_too_low() {
@@ -53,7 +54,7 @@ mod tests {
 
         let result = armset(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -63,6 +64,6 @@ mod tests {
 
         let result = armset(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 }

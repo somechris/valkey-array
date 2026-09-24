@@ -36,3 +36,12 @@ pub fn assert_position_error<OK: Debug, ERR: ToString>(res: Result<OK, ERR>) {
         panic!("expected position error, got {err_msg}");
     }
 }
+
+/// Asserts that the given [`Result`] is an arity error
+pub fn assert_arity_error<OK: Debug, ERR: ToString>(res: Result<OK, ERR>) {
+    let err = res.expect_err("result should fail");
+    let err_msg = err.to_string().to_ascii_lowercase();
+    if !err_msg.contains("wrong") || !(err_msg.contains("arity") || err_msg.contains("number")) {
+        panic!("expected arity error, got {err_msg}");
+    }
+}

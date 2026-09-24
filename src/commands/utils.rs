@@ -176,9 +176,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::commands::utils::{NextArgExtras, ValkeyStringExtras};
-    use crate::test_utils::{assert_position_error, vkstr};
-    use assertables::assert_matches;
-    use valkey_module::{ValkeyError, ValkeyString};
+    use crate::test_utils::{assert_arity_error, assert_position_error, vkstr};
+    use valkey_module::ValkeyString;
 
     #[test]
     pub fn parse_position() {
@@ -206,11 +205,8 @@ mod tests {
         let parsed = vec![vkstr("42")].into_iter().next_position().unwrap();
         assert_eq!(parsed, 42);
 
-        let err = Vec::<ValkeyString>::new()
-            .into_iter()
-            .next_position()
-            .unwrap_err();
-        assert_matches!(err, ValkeyError::WrongArity);
+        let result = Vec::<ValkeyString>::new().into_iter().next_position();
+        assert_arity_error(result);
 
         let result = vec![vkstr("-1")].into_iter().next_position();
         assert_position_error(result);
@@ -274,14 +270,11 @@ mod tests {
             .unwrap();
         assert_eq!(parsed, (42, u64::MAX));
 
-        let err = Vec::<ValkeyString>::new()
-            .into_iter()
-            .next_range()
-            .unwrap_err();
-        assert_matches!(err, ValkeyError::WrongArity);
+        let result = Vec::<ValkeyString>::new().into_iter().next_range();
+        assert_arity_error(result);
 
-        let err = vec![vkstr("42")].into_iter().next_range().unwrap_err();
-        assert_matches!(err, ValkeyError::WrongArity);
+        let result = vec![vkstr("42")].into_iter().next_range();
+        assert_arity_error(result);
 
         let result = vec![vkstr("-1")].into_iter().next_range();
         assert_position_error(result);

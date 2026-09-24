@@ -4,8 +4,9 @@ extern crate core;
 
 pub mod utils;
 
-use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_position_error};
-use assertables::assert_contains;
+use crate::utils::{
+    TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_position_error,
+};
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
 
@@ -15,26 +16,24 @@ fn faulty_calls() {
     let mut con = ctx.connection();
 
     // Too few arguments
-    let err = cmd("ARGREP")
+    let result = cmd("ARGREP")
         .arg("foo")
         .arg("23")
         .arg("42")
         .arg("EXACT")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+        .query::<Value>(&mut con);
+    assert_arity_error(result);
 
     // Too many arguments
-    let err = cmd("ARGREP")
+    let result = cmd("ARGREP")
         .arg("foo")
         .arg("23")
         .arg("42")
         .arg("EXACT")
         .arg("bar")
         .arg("baz")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+        .query::<Value>(&mut con);
+    assert_arity_error(result);
 
     // Wrong type for start
     let result = cmd("ARGREP")
@@ -57,14 +56,13 @@ fn faulty_calls() {
     assert_position_error(result);
 
     // Unknown operation
-    let err = cmd("ARGREP")
+    let result = cmd("ARGREP")
         .arg("foo")
         .arg("23")
         .arg("42")
         .arg("BAZ")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+        .query::<Value>(&mut con);
+    assert_arity_error(result);
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();

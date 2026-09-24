@@ -2,8 +2,9 @@
 
 pub mod utils;
 
-use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_position_error};
-use assertables::assert_contains;
+use crate::utils::{
+    TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error, assert_position_error,
+};
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
 
@@ -13,20 +14,16 @@ fn faulty_calls() {
     let mut con = ctx.connection();
 
     // Too few arguments
-    let err = cmd("ARSEEK")
-        .arg("foo")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+    let result = cmd("ARSEEK").arg("foo").query::<Value>(&mut con);
+    assert_arity_error(result);
 
     // Too many arguments
-    let err = cmd("ARSEEK")
+    let result = cmd("ARSEEK")
         .arg("foo")
         .arg(42)
         .arg("bar")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+        .query::<Value>(&mut con);
+    assert_arity_error(result);
 
     // Wrong type for position
     let result = cmd("ARSEEK").arg("foo").arg("bar").query::<Value>(&mut con);

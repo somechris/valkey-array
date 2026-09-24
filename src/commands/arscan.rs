@@ -69,10 +69,12 @@ mod tests {
     use crate::array::ArrayType;
     use crate::commands::arscan;
     use crate::commands::arscan::act_on_range;
-    use crate::test_utils::{assert_position_error, u32s_with_vals_to_vec_value, vkstr};
-    use assertables::{assert_contains, assert_is_empty, assert_matches};
+    use crate::test_utils::{
+        assert_arity_error, assert_position_error, u32s_with_vals_to_vec_value, vkstr,
+    };
+    use assertables::{assert_contains, assert_is_empty};
+    use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;
-    use valkey_module::{Context, ValkeyError};
 
     #[test]
     fn arity_too_low() {
@@ -81,7 +83,7 @@ mod tests {
 
         let result = arscan(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -91,7 +93,7 @@ mod tests {
 
         let result = arscan(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]
@@ -101,7 +103,7 @@ mod tests {
 
         let result = arscan(&ctx, args);
 
-        assert_matches!(result.unwrap_err(), ValkeyError::WrongArity);
+        assert_arity_error(result);
     }
 
     #[test]

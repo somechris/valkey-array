@@ -2,8 +2,8 @@
 
 pub mod utils;
 
-use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder};
-use assertables::{assert_contains, assert_ge, assert_is_empty};
+use crate::utils::{TypedArrayCommands, ValkeyArrayTestContextBuilder, assert_arity_error};
+use assertables::{assert_ge, assert_is_empty};
 use redis::{TypedCommands, Value, cmd};
 use redis_test::TestContextBuilder;
 use std::collections::HashMap;
@@ -14,16 +14,12 @@ fn faulty_calls() {
     let mut con = ctx.connection();
 
     // Too few arguments
-    let err = cmd("ARINFO").query::<Value>(&mut con).unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+    let result = cmd("ARINFO").query::<Value>(&mut con);
+    assert_arity_error(result);
 
     // Too many arguments
-    let err = cmd("ARINFO")
-        .arg("foo")
-        .arg("bar")
-        .query::<Value>(&mut con)
-        .unwrap_err();
-    assert_contains!(err.to_string(), "wrong");
+    let result = cmd("ARINFO").arg("foo").arg("bar").query::<Value>(&mut con);
+    assert_arity_error(result);
 
     // Operating on non-array type
     con.set("bar", "baz").unwrap();
