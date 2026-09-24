@@ -32,7 +32,7 @@ pub enum SubstituteMatcher {
     ///
     /// The regular expressions are not anchored (neither at the start nor the end).
     ///
-    /// To match Valkey's glob matching, the character classes are _not_ Unicode aware.
+    /// This matcher is _not_ Unicode aware.
     Regex(String),
 }
 

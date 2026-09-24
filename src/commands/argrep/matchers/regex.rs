@@ -36,41 +36,60 @@ impl Matcher for RegexMatcher {
 #[cfg(test)]
 mod tests {
     use super::{Matcher, RegexMatcher};
+
     use crate::test_utils::vkstr;
 
     #[test]
     fn sensitive() {
-        let expr = "b.*[rZ]";
-        let match_fn = RegexMatcher::new(expr.to_string())
-            .get_matcher_func_case_sensitive()
-            .unwrap();
+        fn check(text: &str, re: &str) -> bool {
+            RegexMatcher::new(re.to_string())
+                .get_matcher_func_case_sensitive()
+                .unwrap()(&vkstr(text))
+        }
 
-        assert!(match_fn(&vkstr("br"))); // no wildcard, r (lowercase)
-        assert!(match_fn(&vkstr("bZ"))); // no wildcard, Z (uppercase)
-        assert!(match_fn(&vkstr("bar"))); // simple match
-        assert!(match_fn(&vkstr("  bar"))); // unanchored start
-        assert!(match_fn(&vkstr("bar  "))); // unanchored end
+        assert!(check("foo", "foo")); // full match
+        assert!(check("foo", "oo")); // unanchored start
+        assert!(check("foo", "fo")); // unanchored end
+        assert!(check("foo", "fo*x*o")); // regex with arbirary repetitions
+        assert!(check("foo", "fo+o")); // regex with at least one
+        assert!(check("foo", "fo?oo")); // regex with optional
+        assert!(check("foo", "^foo")); // regex with start matching
+        assert!(check("foo", "foo$")); // regex with end matching
+        assert!(check("foo", "f.o")); // regex with any character
 
-        assert!(!match_fn(&vkstr("bR"))); // no wildcard, R (uppercase)
-        assert!(!match_fn(&vkstr("bz"))); // no wildcard, z (lowercase)
-        assert!(!match_fn(&vkstr("bak"))); // Missing [rz]
+        assert!(!check("foo", "fo+oo")); // regex with at least one, but needs 0 repetitions
+        assert!(!check("fOo", "foo")); // case mismatch, text upper-case
+        assert!(!check("foo", "fOo")); // case mismatch, regex upper-case
+        assert!(!check("föo", "foo")); // non-ASCII text, mismatch
+        assert!(!check("foo", "föo")); // non-ASCII regex, mismatch
+        assert!(!check("föo", "fÖo")); // non-ASCII, regex upper-case
+        assert!(!check("fÖo", "föo")); // non-ASCII, text upper-case
     }
 
     #[test]
     fn insensitive() {
-        let expr = "b.*[rZ]";
-        let match_fn = RegexMatcher::new(expr.to_string())
-            .get_matcher_func_case_insensitive()
-            .unwrap();
+        fn check(text: &str, re: &str) -> bool {
+            RegexMatcher::new(re.to_string())
+                .get_matcher_func_case_insensitive()
+                .unwrap()(&vkstr(text))
+        }
 
-        assert!(match_fn(&vkstr("br"))); // no wildcard, r (lowercase)
-        assert!(match_fn(&vkstr("bR"))); // no wildcard, R (uppercase)
-        assert!(match_fn(&vkstr("bz"))); // no wildcard, z (lowercase)
-        assert!(match_fn(&vkstr("bZ"))); // no wildcard, Z (uppercase)
-        assert!(match_fn(&vkstr("bar"))); // simple match
-        assert!(match_fn(&vkstr("  bar"))); // unanchored start
-        assert!(match_fn(&vkstr("bar  "))); // unanchored end
+        assert!(check("foo", "foo")); // full match
+        assert!(check("foo", "oo")); // unanchored start
+        assert!(check("foo", "fo")); // unanchored end
+        assert!(check("foo", "fo*x*o")); // regex with arbirary repetitions
+        assert!(check("foo", "fo+o")); // regex with at least one
+        assert!(check("foo", "fo?oo")); // regex with optional
+        assert!(check("foo", "^foo")); // regex with start matching
+        assert!(check("foo", "foo$")); // regex with end matching
+        assert!(check("foo", "f.o")); // regex with any character
+        assert!(check("fOo", "foo")); // case mismatch, text upper-case
+        assert!(check("foo", "fOo")); // case mismatch, regex upper-case
+        assert!(check("föo", "fÖo")); // non-ASCII, regex upper-case
+        assert!(check("fÖo", "föo")); // non-ASCII, text upper-case
 
-        assert!(!match_fn(&vkstr("bak"))); // Missing [rZ]
+        assert!(!check("foo", "fo+oo")); // regex with at least one, but needs 0 repetitions
+        assert!(!check("föo", "foo")); // non-ASCII text, mismatch
+        assert!(!check("foo", "föo")); // non-ASCII regex, mismatch
     }
 }
