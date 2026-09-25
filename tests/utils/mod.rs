@@ -127,6 +127,21 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         cmd("ARINSERT").arg(key).arg(values).query(self)
     }
 
+    /// Gives values up to the current insert position
+    fn arlastitems(
+        &mut self,
+        key: &str,
+        count: usize,
+        reverse: bool,
+    ) -> RedisResult<Vec<Option<String>>> {
+        let mut command = cmd("ARLASTITEMS");
+        command.arg(key).arg(count);
+        if reverse {
+            command.arg("REV");
+        }
+        command.query(self)
+    }
+
     /// Number of highest allocated position + 1
     fn arlen(&mut self, key: &str) -> RedisResult<u64> {
         cmd("ARLEN").arg(key).query(self)

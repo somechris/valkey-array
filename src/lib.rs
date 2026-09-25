@@ -10,6 +10,7 @@
 //! * [`ARGREP`](commands::argrep()) - searches for key/values in a range
 //! * [`ARINFO`](commands::arinfo()) - gives information about the array
 //! * [`ARINSERT`](commands::arinsert()) - inserts elements into the array
+//! * [`ARLASTITEMS`](commands::arlastitems()) - gives values up to the current insert position
 //! * [`ARLEN`](commands::arlen()) - gets an array's highest used position + 1
 //! * [`ARMGET`](commands::armget()) - gets multiple values from an array
 //! * [`ARMSET`](commands::armset()) - sets multiple values in an array

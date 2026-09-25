@@ -32,6 +32,15 @@ impl Range {
         };
         Self { start, end, inner }
     }
+
+    /// Builds a new instance
+    pub fn new_maybe_rev(start: u64, end: u64, reverse: bool) -> Self {
+        if reverse {
+            Self::new(end, start)
+        } else {
+            Self::new(start, end)
+        }
+    }
 }
 
 impl Iterator for Range {
@@ -45,7 +54,7 @@ impl Iterator for Range {
 mod tests {
     use super::*;
     #[test]
-    fn increasing() {
+    fn new_increasing() {
         let range = Range::new(40, 42);
 
         assert_eq!(range.start, 40);
@@ -54,12 +63,52 @@ mod tests {
         assert_eq!(range.collect::<Vec<_>>(), vec![40, 41, 42]);
     }
     #[test]
-    fn decreasing() {
+    fn new_decreasing() {
         let range = Range::new(42, 40);
 
         assert_eq!(range.start, 42);
         assert_eq!(range.end, 40);
 
         assert_eq!(range.collect::<Vec<_>>(), vec![42, 41, 40]);
+    }
+
+    #[test]
+    fn new_maybe_rev_not_rev_increasing() {
+        let range = Range::new_maybe_rev(40, 42, false);
+
+        assert_eq!(range.start, 40);
+        assert_eq!(range.end, 42);
+
+        assert_eq!(range.collect::<Vec<_>>(), vec![40, 41, 42]);
+    }
+
+    #[test]
+    fn new_maybe_rev_not_rev_decreasing() {
+        let range = Range::new_maybe_rev(42, 40, false);
+
+        assert_eq!(range.start, 42);
+        assert_eq!(range.end, 40);
+
+        assert_eq!(range.collect::<Vec<_>>(), vec![42, 41, 40]);
+    }
+
+    #[test]
+    fn new_maybe_rev_do_rev_increasing() {
+        let range = Range::new_maybe_rev(40, 42, true);
+
+        assert_eq!(range.start, 42);
+        assert_eq!(range.end, 40);
+
+        assert_eq!(range.collect::<Vec<_>>(), vec![42, 41, 40]);
+    }
+
+    #[test]
+    fn new_maybe_rev_do_rev_decreasing() {
+        let range = Range::new_maybe_rev(42, 40, true);
+
+        assert_eq!(range.start, 40);
+        assert_eq!(range.end, 42);
+
+        assert_eq!(range.collect::<Vec<_>>(), vec![40, 41, 42]);
     }
 }

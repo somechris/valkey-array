@@ -29,6 +29,22 @@ pub fn u32s_with_vals_to_vec_value(items: &[(i32, &'static str)]) -> Vec<ValkeyV
         .collect()
 }
 
+/// Converts a slice of `&str`s to a `Vec<ValkeyValue>`
+///
+/// Non-empty strings get converted to `ValkeyValue::String`, empty strings to `ValkeyValue::Null`.
+pub fn strs_to_vec_value(items: &[&'static str]) -> Vec<ValkeyValue> {
+    items
+        .iter()
+        .map(|str| {
+            if str.is_empty() {
+                ValkeyValue::Null
+            } else {
+                ValkeyValue::from(vkstr(*str))
+            }
+        })
+        .collect()
+}
+
 /// Exits a test with a reason
 #[allow(unused_macros, reason = "Not used in each test")]
 macro_rules! skip_test {
