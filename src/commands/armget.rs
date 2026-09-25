@@ -36,7 +36,7 @@ pub fn armget(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::armget;
-    use crate::test_utils::assert_arity_error;
+    use crate::utils::test_utils::assert_arity_error;
 
     use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;

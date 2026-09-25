@@ -41,7 +41,7 @@ mod tests {
     use crate::Array;
     use crate::commands::arinsert;
     use crate::commands::arinsert::act_on_items;
-    use crate::test_utils::{assert_arity_error, vkstr};
+    use crate::utils::test_utils::{assert_arity_error, vkstr};
     use assertables::assert_some_eq_x;
 
     use crate::array::ArrayType;

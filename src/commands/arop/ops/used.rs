@@ -28,7 +28,7 @@ impl Operation for UsedOperation {
 mod test {
     use super::UsedOperation;
     use crate::commands::arop::ops::Operation;
-    use crate::test_utils::vkstr;
+    use crate::utils::test_utils::vkstr;
     use valkey_module::ValkeyValue;
 
     #[test]

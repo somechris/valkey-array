@@ -172,7 +172,9 @@ mod tests {
     use crate::Array;
     use crate::array::{ArrayType, Range};
     use crate::commands::argrep::{SubstituteMatcher, act_on_range};
-    use crate::test_utils::{assert_arity_error, assert_position_error, u32s_to_vec_value, vkstr};
+    use crate::utils::test_utils::{
+        assert_arity_error, assert_position_error, u32s_to_vec_value, vkstr,
+    };
 
     use rstest::rstest;
     use valkey_module::test_shims::create_test_args;

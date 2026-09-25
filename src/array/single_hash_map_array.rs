@@ -127,7 +127,7 @@ mod tests {
     mod util {
         use super::SingleHashMapArray;
         use crate::array::ArrayType;
-        use crate::test_utils::vkstr;
+        use crate::utils::test_utils::vkstr;
 
         pub fn assert_array_entry<S: Into<String>>(
             array: &SingleHashMapArray,
@@ -151,7 +151,7 @@ mod tests {
 
     use super::SingleHashMapArray;
     use crate::array::{ArrayType, Range};
-    use crate::test_utils::vkstr;
+    use crate::utils::test_utils::vkstr;
     use std::collections::HashMap;
     use util::{assert_array_entry, assert_array_no_entry};
 

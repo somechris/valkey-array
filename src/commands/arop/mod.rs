@@ -102,7 +102,7 @@ pub fn arop(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 #[cfg(test)]
 mod tests {
     use crate::commands::arop;
-    use crate::test_utils::{assert_arity_error, assert_position_error};
+    use crate::utils::test_utils::{assert_arity_error, assert_position_error};
     use assertables::assert_contains;
     use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;

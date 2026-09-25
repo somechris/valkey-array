@@ -38,7 +38,7 @@ impl Matcher for ContainsMatcher {
 #[cfg(test)]
 mod tests {
     use super::{ContainsMatcher, Matcher};
-    use crate::test_utils::vkstr;
+    use crate::utils::test_utils::vkstr;
 
     #[test]
     fn sensitive() {

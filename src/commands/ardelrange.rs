@@ -48,7 +48,7 @@ mod tests {
     use crate::array::{ArrayType, Range};
     use crate::commands::ardelrange;
     use crate::commands::ardelrange::act_on_ranges;
-    use crate::test_utils::{assert_arity_error, assert_position_error, vkstr};
+    use crate::utils::test_utils::{assert_arity_error, assert_position_error, vkstr};
     use assertables::assert_some_eq_x;
     use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;

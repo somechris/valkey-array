@@ -69,7 +69,7 @@ mod tests {
     mod util {
         use crate::Array;
         use crate::array::ArrayType;
-        use crate::test_utils::vkstr;
+        use crate::utils::test_utils::vkstr;
 
         /// Builds a new array with the entries `foo`, `bar`, and `baz`.
         pub fn new_foo_bar_baz_array() -> Array {
@@ -83,7 +83,7 @@ mod tests {
         }
     }
     use crate::commands::arlastitems;
-    use crate::test_utils::{assert_arity_error, strs_to_vec_value};
+    use crate::utils::test_utils::{assert_arity_error, strs_to_vec_value};
 
     use crate::array::ArrayType;
     use crate::commands::arlastitems::act_on_args;

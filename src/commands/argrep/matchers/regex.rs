@@ -37,7 +37,7 @@ impl Matcher for RegexMatcher {
 mod tests {
     use super::{Matcher, RegexMatcher};
 
-    use crate::test_utils::vkstr;
+    use crate::utils::test_utils::vkstr;
 
     #[test]
     fn sensitive() {

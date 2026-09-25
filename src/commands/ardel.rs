@@ -38,7 +38,7 @@ mod tests {
     use crate::array::ArrayType;
     use crate::commands::ardel;
     use crate::commands::ardel::act_on_positions;
-    use crate::test_utils::{assert_position_error, vkstr};
+    use crate::utils::test_utils::{assert_position_error, vkstr};
     use assertables::assert_some_eq_x;
     use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;

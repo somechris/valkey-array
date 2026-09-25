@@ -176,7 +176,7 @@ where
 mod tests {
     use crate::array::Range;
     use crate::commands::utils::{NextArgExtras, ValkeyStringExtras};
-    use crate::test_utils::{assert_arity_error, assert_position_error, vkstr};
+    use crate::utils::test_utils::{assert_arity_error, assert_position_error, vkstr};
     use valkey_module::ValkeyString;
 
     #[test]

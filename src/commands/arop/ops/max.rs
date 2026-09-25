@@ -44,7 +44,7 @@ impl Operation for MaxOperation {
 mod test {
     use super::MaxOperation;
     use crate::commands::arop::ops::Operation;
-    use crate::test_utils::vkstr;
+    use crate::utils::test_utils::vkstr;
     use valkey_module::ValkeyValue;
 
     #[test]

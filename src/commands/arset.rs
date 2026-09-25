@@ -40,7 +40,7 @@ mod tests {
     use crate::array::ArrayType;
     use crate::commands::arset;
     use crate::commands::arset::act_on_items;
-    use crate::test_utils::{assert_position_error, vkstr};
+    use crate::utils::test_utils::{assert_position_error, vkstr};
     use assertables::{assert_none, assert_some_eq_x};
     use valkey_module::Context;
     use valkey_module::test_shims::create_test_args;

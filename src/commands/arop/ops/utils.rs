@@ -19,7 +19,7 @@ pub fn vkstring_to_floored_i64(input: &ValkeyString) -> Result<i64, &'static str
 #[cfg(test)]
 mod tests {
     use super::vkstring_to_floored_i64;
-    use crate::test_utils::vkstr;
+    use crate::utils::test_utils::vkstr;
     use assertables::assert_err;
 
     #[test]

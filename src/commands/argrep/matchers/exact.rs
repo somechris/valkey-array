@@ -30,7 +30,7 @@ impl Matcher for ExactMatcher {
 #[cfg(test)]
 mod tests {
     use super::{ExactMatcher, Matcher};
-    use crate::test_utils::vkstr;
+    use crate::utils::test_utils::vkstr;
 
     #[test]
     fn sensitive() {
