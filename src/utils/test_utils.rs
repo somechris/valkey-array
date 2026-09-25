@@ -3,8 +3,8 @@
 #![allow(clippy::expect_used, reason = "This is only used in test code")]
 #![allow(clippy::panic, reason = "This is only used in test code")]
 
-use redis::RedisResult;
 use std::fmt::Debug;
+use utils::agnostic::RespResult;
 use valkey_module::{ValkeyString, ValkeyValue};
 
 /// Builds a new [`ValkeyString`]
@@ -65,6 +65,7 @@ macro_rules! skip_test_if {
         }
     };
 }
+use crate::utils;
 #[allow(unused_imports, reason = "Not used in each test")]
 pub(crate) use skip_test_if;
 
@@ -88,7 +89,7 @@ pub fn assert_arity_error<OK: Debug, ERR: ToString>(res: Result<OK, ERR>) {
 
 /// Asserts that the given [`Result`] is an error about a key's value having from type
 #[allow(dead_code, reason = "This is only used in integration tests")]
-pub fn assert_wrong_type_error<OK: Debug>(res: RedisResult<OK>) {
+pub fn assert_wrong_type_error<OK: Debug>(res: RespResult<OK>) {
     let err = res.expect_err("result should fail");
     let Some(code) = err.code() else {
         panic!("error should have a 'code'");
@@ -98,7 +99,7 @@ pub fn assert_wrong_type_error<OK: Debug>(res: RedisResult<OK>) {
 
 /// Asserts that the given [`Result`] is an error about an unused key
 #[allow(dead_code, reason = "This is only used in integration tests")]
-pub fn assert_unused_key_error<OK: Debug>(res: RedisResult<OK>) {
+pub fn assert_unused_key_error<OK: Debug>(res: RespResult<OK>) {
     let err = res.expect_err("result should fail");
     let err_msg = err.to_string().to_ascii_lowercase();
     if !err_msg.contains("unused") || !err_msg.contains("key") {

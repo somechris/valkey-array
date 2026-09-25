@@ -1,6 +1,6 @@
 //! Utils for integration tests
 
-use redis::{Connection, ConnectionLike, FromRedisValue, RedisResult, ToRedisArgs, cmd};
+use redis::{Connection, ConnectionLike, cmd};
 use redis_test::server::Output;
 use redis_test::utils::CommandMultiArgs;
 use redis_test::{TestContext, TestContextBuilder};
@@ -9,6 +9,10 @@ use std::collections::HashMap;
 #[path = "../../src/utils/test_utils.rs"]
 mod test_utils;
 pub use test_utils::*;
+
+#[path = "../../src/utils/agnostic.rs"]
+mod agnostic;
+pub use agnostic::*;
 
 const SERVER_BIN_ENV_VAR: &str = "REDISRS_SERVER_BIN";
 
@@ -45,32 +49,32 @@ impl ValkeyArrayTestContextBuilder for TestContextBuilder {
 /// Typed array commands for [`ConnectionLike`]s
 pub trait TypedArrayCommands: ConnectionLike + Sized {
     /// Number of elements in the array
-    fn arcount(&mut self, key: &str) -> RedisResult<u64> {
+    fn arcount(&mut self, key: &str) -> RespResult<u64> {
         cmd("ARCOUNT").arg(key).query(self)
     }
 
     /// Deletes on element from the array
-    fn ardel<T: ToRedisArgs>(&mut self, key: &str, positions: T) -> RedisResult<u64> {
+    fn ardel<T: ToRespArgs>(&mut self, key: &str, positions: T) -> RespResult<u64> {
         cmd("ARDEL").arg(key).arg(positions).query(self)
     }
 
     /// Deletes a range of elements
-    fn ardelrange(&mut self, key: &str, ranges: &[(u64, u64)]) -> RedisResult<u64> {
+    fn ardelrange(&mut self, key: &str, ranges: &[(u64, u64)]) -> RespResult<u64> {
         cmd("ARDELRANGE").arg(key).arg(ranges).query(self)
     }
 
     /// Gets an element from the array
-    fn arget(&mut self, key: &str, position: u64) -> RedisResult<Option<String>> {
+    fn arget(&mut self, key: &str, position: u64) -> RespResult<Option<String>> {
         cmd("ARGET").arg(key).arg(position).query(self)
     }
 
     /// Gets a range of elements
-    fn argetrange(&mut self, key: &str, start: u64, end: u64) -> RedisResult<Vec<Option<String>>> {
+    fn argetrange(&mut self, key: &str, start: u64, end: u64) -> RespResult<Vec<Option<String>>> {
         cmd("ARGETRANGE").arg(key).arg(start).arg(end).query(self)
     }
 
     /// Gets info about the array
-    fn arinfo(&mut self, key: &str, full: bool) -> RedisResult<HashMap<String, String>> {
+    fn arinfo(&mut self, key: &str, full: bool) -> RespResult<HashMap<String, String>> {
         let mut command = cmd("ARINFO");
         command.arg(key);
 
@@ -89,7 +93,7 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         end: u64,
         op: &str,
         search_exp: &str,
-    ) -> RedisResult<Vec<i64>> {
+    ) -> RespResult<Vec<i64>> {
         cmd("ARGREP")
             .arg(key)
             .arg(start)
@@ -104,14 +108,14 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         clippy::too_many_arguments,
         reason = "We don't want to fully model the options just to test the command"
     )]
-    fn argrep_ex<T: FromRedisValue>(
+    fn argrep_ex<T: FromRespValue>(
         &mut self,
         key: &str,
         start: u64,
         end: u64,
         ops: &[(&str, &str)],
         extra_args: &[&str],
-    ) -> RedisResult<T> {
+    ) -> RespResult<T> {
         let mut command = cmd("ARGREP");
         command.arg(key).arg(start).arg(end).arg(ops);
 
@@ -123,7 +127,7 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Inserts an element into the array at the insert cursor
-    fn arinsert<T: ToRedisArgs>(&mut self, key: &str, values: T) -> RedisResult<u64> {
+    fn arinsert<T: ToRespArgs>(&mut self, key: &str, values: T) -> RespResult<u64> {
         cmd("ARINSERT").arg(key).arg(values).query(self)
     }
 
@@ -133,7 +137,7 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         key: &str,
         count: usize,
         reverse: bool,
-    ) -> RedisResult<Vec<Option<String>>> {
+    ) -> RespResult<Vec<Option<String>>> {
         let mut command = cmd("ARLASTITEMS");
         command.arg(key).arg(count);
         if reverse {
@@ -143,45 +147,45 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Number of highest allocated position + 1
-    fn arlen(&mut self, key: &str) -> RedisResult<u64> {
+    fn arlen(&mut self, key: &str) -> RespResult<u64> {
         cmd("ARLEN").arg(key).query(self)
     }
 
     /// Gets multiple elements
-    fn armget(&mut self, key: &str, positions: &[u64]) -> RedisResult<Vec<Option<String>>> {
+    fn armget(&mut self, key: &str, positions: &[u64]) -> RespResult<Vec<Option<String>>> {
         cmd("ARMGET").arg(key).arg(positions).query(self)
     }
 
     /// Sets multiple elements
-    fn armset(&mut self, key: &str, positions: &[(u64, &str)]) -> RedisResult<u64> {
+    fn armset(&mut self, key: &str, positions: &[(u64, &str)]) -> RespResult<u64> {
         cmd("ARMSET").arg(key).arg(positions).query(self)
     }
 
     /// The position for the next insert
-    fn arnext(&mut self, key: &str) -> RedisResult<u64> {
+    fn arnext(&mut self, key: &str) -> RespResult<u64> {
         cmd("ARNEXT").arg(key).query(self)
     }
 
     /// Runs an operaton on a range of an array
-    fn arop<T: FromRedisValue>(
+    fn arop<T: FromRespValue>(
         &mut self,
         key: &str,
         start: u64,
         end: u64,
         op: &str,
-    ) -> RedisResult<T> {
+    ) -> RespResult<T> {
         cmd("AROP").arg(key).arg(start).arg(end).arg(op).query(self)
     }
 
     /// Runs an operation with an extra parameter on a range of an array
-    fn arop_ex<T: FromRedisValue>(
+    fn arop_ex<T: FromRespValue>(
         &mut self,
         key: &str,
         start: u64,
         end: u64,
         op: &str,
         extra_param: &str,
-    ) -> RedisResult<T> {
+    ) -> RespResult<T> {
         cmd("AROP")
             .arg(key)
             .arg(start)
@@ -192,12 +196,7 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Inserts an element in a ring-buffer fashion
-    fn arring<T: ToRedisArgs>(
-        &mut self,
-        key: &str,
-        buffer_size: u64,
-        values: T,
-    ) -> RedisResult<u64> {
+    fn arring<T: ToRespArgs>(&mut self, key: &str, buffer_size: u64, values: T) -> RespResult<u64> {
         cmd("ARRING")
             .arg(key)
             .arg(buffer_size)
@@ -206,7 +205,7 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Scans a range for key/values
-    fn arscan(&mut self, key: &str, start: u64, end: u64) -> RedisResult<Vec<(u64, String)>> {
+    fn arscan(&mut self, key: &str, start: u64, end: u64) -> RespResult<Vec<(u64, String)>> {
         cmd("ARSCAN").arg(key).arg(start).arg(end).query(self)
     }
 
@@ -217,7 +216,7 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
         start: u64,
         end: u64,
         limit: u64,
-    ) -> RedisResult<Vec<(u64, String)>> {
+    ) -> RespResult<Vec<(u64, String)>> {
         cmd("ARSCAN")
             .arg(key)
             .arg(start)
@@ -228,12 +227,12 @@ pub trait TypedArrayCommands: ConnectionLike + Sized {
     }
 
     /// Sets the position for the next insert
-    fn arseek(&mut self, key: &str, position: u64) -> RedisResult<u64> {
+    fn arseek(&mut self, key: &str, position: u64) -> RespResult<u64> {
         cmd("ARSEEK").arg(key).arg(position).query(self)
     }
 
     /// Sets an element in the array
-    fn arset<T: ToRedisArgs>(&mut self, key: &str, position: u64, values: T) -> RedisResult<u64> {
+    fn arset<T: ToRespArgs>(&mut self, key: &str, position: u64, values: T) -> RespResult<u64> {
         cmd("ARSET").arg(key).arg(position).arg(values).query(self)
     }
 }
